@@ -1,3 +1,56 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+[x-cloak] {
+	display: none !important;
+}
+
+@layer utilities {
+	@keyframes splash-bg-move {
+		0% {
+			transform: scale(1) translate3d(0, 0, 0);
+		}
+		50% {
+			transform: scale(1.08) translate3d(-2%, -1.5%, 0);
+		}
+		100% {
+			transform: scale(1) translate3d(0, 0, 0);
+		}
+	}
+
+	@keyframes splash-breathe {
+		0%,
+		100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.06);
+		}
+	}
+
+	@keyframes splash-text-fade-in {
+		0% {
+			opacity: 0;
+			transform: translateY(8px);
+		}
+		100% {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	.animate-splash-bg {
+		animation: splash-bg-move 9s ease-in-out infinite;
+		will-change: transform;
+	}
+
+	.animate-splash-breathe {
+		animation: splash-breathe 2.8s ease-in-out infinite;
+		will-change: transform;
+	}
+
+	.animate-splash-text-in {
+		animation: splash-text-fade-in 900ms ease-out 450ms both;
+	}
+}

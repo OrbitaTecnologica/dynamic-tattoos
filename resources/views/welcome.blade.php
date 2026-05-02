@@ -12,6 +12,8 @@
     @livewireStyles
 </head>
 <body class="min-h-screen overflow-x-hidden bg-slate-950 text-slate-100 antialiased" style="font-family: 'Outfit', sans-serif;">
+    <x-landing.splash-screen />
+
     <div class="relative isolate">
         <div class="pointer-events-none absolute inset-0 -z-20 bg-[radial-gradient(circle_at_15%_15%,rgba(34,211,238,0.22),transparent_35%),radial-gradient(circle_at_85%_20%,rgba(217,70,239,0.2),transparent_36%),radial-gradient(circle_at_50%_90%,rgba(139,92,246,0.22),transparent_34%),linear-gradient(120deg,#020617,#0b1120,#111827,#0f172a)] bg-[length:240%_240%] animate-gradient-x"></div>
         <div class="pointer-events-none absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:34px_34px]"></div>
