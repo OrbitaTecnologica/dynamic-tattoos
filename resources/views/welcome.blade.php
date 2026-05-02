@@ -48,6 +48,10 @@
                        class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200">
                         Iniciar sesión
                     </a>
+                    <a href="{{ route('register') }}"
+                       class="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-500/40">
+                        Regístrate
+                    </a>
                 @endauth
             </div>
         </header>
