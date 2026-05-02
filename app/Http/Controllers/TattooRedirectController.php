@@ -1,0 +1,109 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Http\Controllers;
+
+use App\Models\Tattoo;
+use App\Models\TattooContent;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\View\View;
+
+/**
+ * TattooRedirectController – single-action (invokable) controller
+ *
+ * Handles every incoming QR scan (GET /t/{shortCode}).
+ *
+ * Decision tree:
+ *   1. Validate short_code format (alphanumeric) to prevent injection.
+ *   2. Resolve the active TattooContent via Cache::remember (5-minute TTL).
+ *   3. If content is a "Link" type → 302 redirect to the external URL.
+ *      A scheme whitelist (http/https) prevents open-redirect to javascript:
+ *      or data: URIs (OWASP A01 / CWE-601).
+ *   4. Otherwise → render tattoo/show.blade.php which mounts <livewire:tattoo-viewer>.
+ */
+final class TattooRedirectController extends Controller
+{
+    /** Cache TTL in seconds (5 minutes). Adjust to taste. */
+    private const CACHE_TTL_SECONDS = 300;
+
+    public function __invoke(Request $request, string $shortCode): RedirectResponse|View
+    {
+        // Strict format validation – prevents SQL wildcard abuse and path traversal
+        if (! preg_match('/^[a-zA-Z0-9]{1,12}$/', $shortCode)) {
+            abort(404);
+        }
+
+        $content = $this->resolveActiveContent($shortCode);
+
+        if ($content === null) {
+            abort(404);
+        }
+
+        if ($content->isDirectRedirect()) {
+            return $this->handleLinkRedirect($content);
+        }
+
+        return view('tattoo.show', [
+            'content'   => $content,
+            'shortCode' => $shortCode,
+        ]);
+    }
+
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
+    /**
+     * Fetches the active TattooContent for a given short_code, wrapping the
+     * database query in a Cache::remember block to minimise DB hits on every
+     * QR scan.
+     *
+     * The cache key "tattoo_content_{short_code}" is explicitly busted in
+     * ManageTattoo::save() so changes are visible on the next scan.
+     */
+    private function resolveActiveContent(string $shortCode): ?TattooContent
+    {
+        $cacheKey = "tattoo_content_{$shortCode}";
+
+        /** @var TattooContent|null */
+        return Cache::remember(
+            $cacheKey,
+            self::CACHE_TTL_SECONDS,
+            static function () use ($shortCode): ?TattooContent {
+                return Tattoo::query()
+                    ->active()
+                    ->byShortCode($shortCode)
+                    ->with(['activeContent'])
+                    ->first()
+                    ?->activeContent;
+            }
+        );
+    }
+
+    /**
+     * Validates the redirect target and issues the 302.
+     * Rejects any URL whose scheme is not http or https to block open-redirect
+     * to non-web protocols (OWASP A01:2021 / CWE-601).
+     */
+    private function handleLinkRedirect(TattooContent $content): RedirectResponse
+    {
+        $rawUrl = $content->payload['url'] ?? '';
+
+        $url = filter_var($rawUrl, FILTER_VALIDATE_URL);
+
+        if ($url === false) {
+            abort(404);
+        }
+
+        $scheme = parse_url($url, PHP_URL_SCHEME);
+
+        if (! in_array($scheme, ['http', 'https'], strict: true)) {
+            abort(404);
+        }
+
+        return redirect()->away($url, 302);
+    }
+}
