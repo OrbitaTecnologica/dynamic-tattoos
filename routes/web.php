@@ -2,19 +2,22 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TattooRedirectController;
 use App\Models\Tattoo;
 use Illuminate\Support\Facades\Route;
 
+/*
+|--------------------------------------------------------------------------
+| Landing
+|--------------------------------------------------------------------------
+*/
 Route::view('/', 'welcome')->name('home');
 
 /*
 |--------------------------------------------------------------------------
 | Public QR Redirect Route
 |--------------------------------------------------------------------------
-| Every QR code encodes a URL like https://app.com/t/{shortCode}.
-| The regex constraint prevents path-traversal and injection attempts before
-| the request reaches the controller.
 */
 Route::get('/t/{shortCode}', TattooRedirectController::class)
     ->name('tattoo.show')
@@ -22,19 +25,37 @@ Route::get('/t/{shortCode}', TattooRedirectController::class)
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated User Routes
+| Authenticated User Routes (Breeze profile + tattoo management)
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function (): void {
 
-    /*
-     * Tattoo management page.
-     * Route-model binding resolves the Tattoo by its primary key.
-     * The ManageTattoo Livewire component calls $this->authorize('update', $tattoo)
-     * internally, so ownership is enforced at the component level regardless of
-     * any direct URL access.
-     */
+    Route::get('/dashboard', fn () => view('dashboard'))->name('dashboard');
+
     Route::get('/dashboard/tattoos/{tattoo}/manage', function (Tattoo $tattoo) {
         return view('dashboard.manage-tattoo', compact('tattoo'));
     })->name('tattoos.manage');
 });
+
+Route::middleware('auth')->group(function (): void {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
+    Route::view('/', 'admin.dashboard')->name('dashboard');
+    Route::view('/tattoos', 'admin.tattoos')->name('tattoos');
+    Route::view('/scans', 'admin.scans')->name('scans');
+    Route::view('/qr-generator', 'admin.qr-generator')->name('qr-generator');
+    Route::view('/pricing', 'admin.pricing')->name('pricing');
+    Route::view('/account', 'admin.account')->name('account');
+    Route::view('/users', 'admin.users')->name('users');
+});
+
+require __DIR__.'/auth.php';

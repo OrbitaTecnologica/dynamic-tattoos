@@ -2,55 +2,36 @@
 @tailwind components;
 @tailwind utilities;
 
-[x-cloak] {
-	display: none !important;
-}
-
-@layer utilities {
-	@keyframes splash-bg-move {
-		0% {
-			transform: scale(1) translate3d(0, 0, 0);
-		}
-		50% {
-			transform: scale(1.08) translate3d(-2%, -1.5%, 0);
-		}
-		100% {
-			transform: scale(1) translate3d(0, 0, 0);
-		}
+@layer base {
+	input,
+	select,
+	textarea {
+		color: rgb(243 244 246);
+		background-color: rgba(10, 10, 10, 0.7);
+		border-color: rgba(255, 255, 255, 0.12);
 	}
 
-	@keyframes splash-breathe {
-		0%,
-		100% {
-			transform: scale(1);
-		}
-		50% {
-			transform: scale(1.06);
-		}
+	input::placeholder,
+	textarea::placeholder {
+		color: rgb(107 114 128);
 	}
 
-	@keyframes splash-text-fade-in {
-		0% {
-			opacity: 0;
-			transform: translateY(8px);
-		}
-		100% {
-			opacity: 1;
-			transform: translateY(0);
-		}
+	select option {
+		color: rgb(243 244 246);
+		background-color: rgb(10 10 10);
 	}
 
-	.animate-splash-bg {
-		animation: splash-bg-move 9s ease-in-out infinite;
-		will-change: transform;
-	}
-
-	.animate-splash-breathe {
-		animation: splash-breathe 2.8s ease-in-out infinite;
-		will-change: transform;
-	}
-
-	.animate-splash-text-in {
-		animation: splash-text-fade-in 900ms ease-out 450ms both;
+	input:-webkit-autofill,
+	input:-webkit-autofill:hover,
+	input:-webkit-autofill:focus,
+	textarea:-webkit-autofill,
+	textarea:-webkit-autofill:hover,
+	textarea:-webkit-autofill:focus,
+	select:-webkit-autofill,
+	select:-webkit-autofill:hover,
+	select:-webkit-autofill:focus {
+		-webkit-text-fill-color: rgb(243 244 246);
+		-webkit-box-shadow: 0 0 0 1000px rgb(10 10 10) inset;
+		transition: background-color 5000s ease-in-out 0s;
 	}
 }

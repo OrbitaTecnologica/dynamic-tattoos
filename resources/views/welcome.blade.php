@@ -25,9 +25,31 @@
                 <span class="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-cyan-300 to-violet-400 text-slate-900">DT</span>
                 Evolucion Tatuaje Dinamico
             </a>
-            <a href="/up" class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200">
-                Estado
-            </a>
+            <div class="flex items-center gap-3">
+                <a href="/up" class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200">
+                    Estado
+                </a>
+                @auth
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.dashboard') }}"
+                           class="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-500/40">
+                            Admin Panel
+                        </a>
+                    @endif
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit"
+                                class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400 transition hover:border-red-500/40 hover:text-red-400">
+                            Salir
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}"
+                       class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200">
+                        Iniciar sesión
+                    </a>
+                @endauth
+            </div>
         </header>
 
         <x-landing.hero />

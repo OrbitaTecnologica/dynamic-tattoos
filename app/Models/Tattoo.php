@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\TattooScan;
 use Illuminate\Support\Str;
 
 final class Tattoo extends Model
@@ -102,6 +103,11 @@ final class Tattoo extends Model
     // -------------------------------------------------------------------------
 
     /** Returns the public URL encoded in the QR code. */
+    public function scans(): HasMany
+    {
+        return $this->hasMany(TattooScan::class);
+    }
+
     public function getQrUrlAttribute(): string
     {
         return route('tattoo.show', ['shortCode' => $this->short_code]);

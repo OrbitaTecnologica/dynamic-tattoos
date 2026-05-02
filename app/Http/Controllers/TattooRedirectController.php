@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Tattoo;
 use App\Models\TattooContent;
+use App\Models\TattooScan;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -41,6 +42,8 @@ final class TattooRedirectController extends Controller
         if ($content === null) {
             abort(404);
         }
+
+        $this->recordScan($request, $content->tattoo_id);
 
         if ($content->isDirectRedirect()) {
             return $this->handleLinkRedirect($content);
@@ -81,6 +84,25 @@ final class TattooRedirectController extends Controller
                     ?->activeContent;
             }
         );
+    }
+
+    /**
+     * Records the QR scan event asynchronously (best-effort; does not block
+     * the redirect). Only captures IP, user-agent and derived device/browser
+     * metadata — no PII beyond what is necessary for analytics.
+     */
+    private function recordScan(Request $request, int $tattooId): void
+    {
+        $userAgent = substr((string) $request->userAgent(), 0, 512);
+
+        TattooScan::create([
+            'tattoo_id'   => $tattooId,
+            'ip_address'  => $request->ip(),
+            'device_type' => TattooScan::detectDevice($userAgent),
+            'browser'     => TattooScan::detectBrowser($userAgent),
+            'user_agent'  => $userAgent,
+            'scanned_at'  => now(),
+        ]);
     }
 
     /**
