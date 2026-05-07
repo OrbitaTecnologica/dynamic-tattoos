@@ -18,6 +18,7 @@ final class Plan extends Model
         'slug',
         'price',
         'billing_cycle',
+        'stripe_price_id',
         'features',
         'max_tattoos',
         'is_active',

@@ -107,6 +107,11 @@
                                 <option value="lifetime">De por vida</option>
                             </select>
                         </div>
+                        <div class="col-span-2 space-y-1">
+                            <label class="text-xs font-medium text-gray-400">Stripe Price ID</label>
+                            <input wire:model="stripePriceId" type="text" class="admin-input w-full" placeholder="price_123abc...">
+                            @error('stripePriceId') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                        </div>
                         <div class="space-y-1">
                             <label class="text-xs font-medium text-gray-400">Máx. tatuajes</label>
                             <input wire:model="maxTattoos" type="number" min="1" class="admin-input w-full">

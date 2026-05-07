@@ -18,6 +18,7 @@ final class PricingPlans extends Component
     // Form fields
     public string $name         = '';
     public string $billingCycle = 'monthly';
+    public string $stripePriceId = '';
     public string $price        = '0';
     public int    $maxTattoos   = 1;
     public string $featuresRaw  = '';
@@ -43,7 +44,7 @@ final class PricingPlans extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'name', 'billingCycle', 'price', 'maxTattoos', 'featuresRaw', 'isActive', 'sortOrder']);
+        $this->reset(['editingId', 'name', 'billingCycle', 'stripePriceId', 'price', 'maxTattoos', 'featuresRaw', 'isActive', 'sortOrder']);
         $this->billingCycle = 'monthly';
         $this->isActive     = true;
         $this->showModal    = true;
@@ -56,6 +57,7 @@ final class PricingPlans extends Component
         $this->editingId    = $plan->id;
         $this->name         = $plan->name;
         $this->billingCycle = $plan->billing_cycle;
+        $this->stripePriceId = $plan->stripe_price_id ?? '';
         $this->price        = (string) $plan->price;
         $this->maxTattoos   = $plan->max_tattoos;
         $this->featuresRaw  = implode("\n", $plan->features ?? []);
@@ -69,6 +71,7 @@ final class PricingPlans extends Component
         $this->validate([
             'name'         => ['required', 'string', 'max:100'],
             'billingCycle' => ['required', 'in:monthly,yearly,lifetime'],
+            'stripePriceId' => ['nullable', 'string', 'max:255'],
             'price'        => ['required', 'numeric', 'min:0'],
             'maxTattoos'   => ['required', 'integer', 'min:1', 'max:999'],
             'featuresRaw'  => ['nullable', 'string'],
@@ -85,6 +88,7 @@ final class PricingPlans extends Component
             'name'          => $this->name,
             'slug'          => Str::slug($this->name),
             'billing_cycle' => $this->billingCycle,
+            'stripe_price_id' => $this->stripePriceId !== '' ? $this->stripePriceId : null,
             'price'         => (float) $this->price,
             'max_tattoos'   => $this->maxTattoos,
             'features'      => array_values($features),

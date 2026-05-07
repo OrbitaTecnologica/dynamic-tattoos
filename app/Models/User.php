@@ -9,11 +9,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Cashier\Billable;
 
 final class User extends Authenticatable
 {
     use HasFactory;
     use Notifiable;
+    use Billable;
 
     protected $fillable = [
         'name',
@@ -64,5 +66,19 @@ final class User extends Authenticatable
     public function isArtist(): bool
     {
         return $this->role === 'artist';
+    }
+
+    public function hasActivePlan(): bool
+    {
+        return $this->subscribed('default');
+    }
+
+    public function canAddTattoo(): bool
+    {
+        if (! $this->hasActivePlan() || $this->plan === null) {
+            return false;
+        }
+
+        return $this->tattoos()->count() < $this->plan->max_tattoos;
     }
 }
