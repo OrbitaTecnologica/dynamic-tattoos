@@ -74,6 +74,7 @@
 <div
     x-data="qrBuilder({
         storeUrl: @js(route('qr.store')),
+        baseUrl: @js($baseUrl),
         csrf: document.querySelector('meta[name=csrf-token]').content,
     })"
     x-init="init()"
@@ -97,26 +98,55 @@
             <div>
                 <div class="flex items-center gap-3 mb-4">
                     <span class="step-num w-7 h-7 rounded-full grid place-items-center text-sm font-semibold text-white">1</span>
-                    <h2 class="text-lg font-semibold text-white">Introduce tu URL</h2>
+                    <h2 class="text-lg font-semibold text-white">Define tu enlace</h2>
                 </div>
-                <label for="url" class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Dirección web</label>
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500">
-                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 015.656 5.656l-3 3a4 4 0 01-5.656-5.656M10.172 13.828a4 4 0 01-5.656-5.656l3-3a4 4 0 015.656 5.656"/></svg>
+                <label for="slug" class="block text-xs font-medium uppercase tracking-wider text-slate-400 mb-2">Destino del QR</label>
+
+                <div class="input flex items-stretch w-full rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-rose-500/40">
+                    <span class="flex items-center gap-2.5 px-5 py-3 bg-white/[0.04] border-r border-white/[0.06] text-slate-400 text-sm select-none">
+                        <svg class="w-4 h-4 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        <span class="font-mono text-[13px] tracking-tight whitespace-nowrap">{{ str_replace(['https://','http://'], '', $baseUrl) }}/</span>
                     </span>
                     <input
-                        id="url"
-                        type="url"
-                        placeholder="https://tu-sitio.com"
-                        x-model.debounce.300ms="form.url"
-                        class="input w-full rounded-xl pl-10 pr-10 py-3 text-slate-100 placeholder:text-slate-500"
+                        id="slug"
+                        type="text"
+                        autocomplete="off"
+                        spellcheck="false"
+                        placeholder="mi-tatuaje"
+                        x-model.debounce.300ms="form.slug"
+                        @input="form.slug = $event.target.value.replace(/\s+/g,'-').replace(/[^A-Za-z0-9._~\-\/]/g,'')"
+                        class="flex-1 min-w-0 bg-transparent border-0 focus:outline-none pl-5 pr-4 py-3 text-slate-100 placeholder:text-slate-500 font-mono text-[13px]"
                     >
-                    <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none" x-show="form.url">
+                    <span class="pr-3 flex items-center pointer-events-none" x-show="form.slug">
                         <svg x-show="urlValid" class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                         <svg x-show="!urlValid" class="w-4 h-4 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
                     </span>
                 </div>
-                <p x-show="errors.url" x-text="errors.url" class="text-sm text-rose-400 mt-2"></p>
+
+                <p class="mt-2 text-[11px] text-slate-500">
+                    URL final: <span class="font-mono text-slate-300" x-text="form.url || '{{ $baseUrl }}/…'"></span>
+                </p>
+                <p x-show="errors.slug || errors.url" x-text="errors.slug || errors.url" class="text-sm text-rose-400 mt-2"></p>
+
+                {{-- Aviso de inmutabilidad --}}
+                <div class="mt-8 relative overflow-hidden rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-white/[0.01]">
+                    <span aria-hidden="true" class="absolute inset-y-0 left-0 w-[3px]" style="background:linear-gradient(180deg,#ff4d4d,#b30000);"></span>
+                    <div class="p-4 pl-5">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="shrink-0 flex items-center justify-center w-5 h-5 rounded-md border border-rose-500/20"
+                                  style="background:radial-gradient(circle at 30% 30%, rgba(255,77,77,0.18), rgba(179,0,0,0.05));">
+                                <svg class="w-2.5 h-2.5 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 3.5h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                                </svg>
+                            </span>
+                            <span class="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400 leading-none">Importante</span>
+                            <span class="h-px flex-1 bg-gradient-to-r from-rose-500/30 to-transparent"></span>
+                        </div>
+                        <p class="text-[12.5px] leading-relaxed text-slate-300">
+                            Una vez generado el QR de forma definitiva, <strong class="text-white font-semibold">la URL no podrá modificarse</strong>. Asegúrate de que el destino es correcto antes de guardar.
+                        </p>
+                    </div>
+                </div>
             </div>
 
             {{-- Paso 2 · Color --}}
@@ -403,10 +433,12 @@
 
     function qrBuilder(config) {
         return {
+            baseUrl: config.baseUrl,
             dotsTypes: buildOptions(@json($dotsTypes), SHAPES.dots),
             cornersSquareTypes: buildOptions(@json($cornersSquareTypes), SHAPES.cornersSquare),
             cornersDotTypes: buildOptions(@json($cornersDotTypes), SHAPES.cornersDot),
             form: {
+                slug: '',
                 url: '',
                 color: '#000000',
                 dots_type: 'square',
@@ -442,9 +474,10 @@
                 this.qr.append(this.$refs.qr);
 
                 this.$watch('form', () => this.update(), { deep: true });
-                this.$watch('form.url', (val) => {
-                    try { new URL(val); this.urlValid = true; }
-                    catch { this.urlValid = false; }
+                this.$watch('form.slug', (val) => {
+                    const clean = (val || '').replace(/^\/+/, '');
+                    this.form.url = clean ? `${this.baseUrl}/${clean}` : '';
+                    this.urlValid = clean.length > 0 && /^[A-Za-z0-9._~\-\/]+$/.test(clean);
                 });
                 this.update();
             },
@@ -478,7 +511,11 @@
             },
 
             loadFromHistory(item) {
-                this.form.url                = item.url;
+                const prefix = this.baseUrl + '/';
+                this.form.slug = item.url && item.url.startsWith(prefix)
+                    ? item.url.slice(prefix.length)
+                    : item.url;
+                this.form.url               = item.url;
                 this.form.color             = item.color;
                 this.form.dots_type         = item.dots_type;
                 this.form.corners_square_type = item.corners_square_type;

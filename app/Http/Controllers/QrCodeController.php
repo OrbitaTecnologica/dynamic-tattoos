@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Mail;
 
 class QrCodeController extends Controller
 {
+    public const BASE_URL = 'https://d-tattoo.com';
+
     public const DOTS_TYPES = [
         'square', 'dots', 'rounded', 'extra-rounded',
     ];
@@ -24,6 +26,7 @@ class QrCodeController extends Controller
     public function create()
     {
         return view('qr.create', [
+            'baseUrl'            => self::BASE_URL,
             'dotsTypes'          => self::DOTS_TYPES,
             'cornersSquareTypes' => self::CORNERS_SQUARE_TYPES,
             'cornersDotTypes'    => self::CORNERS_DOT_TYPES,
@@ -34,12 +37,17 @@ class QrCodeController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'url' => ['required', 'url', 'max:2048'],
+            'slug' => ['required', 'string', 'max:200', 'regex:/^[A-Za-z0-9._~\-\/]+$/'],
             'color' => ['required', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'dots_type' => ['required', 'in:' . implode(',', self::DOTS_TYPES)],
             'corners_square_type' => ['required', 'in:' . implode(',', self::CORNERS_SQUARE_TYPES)],
             'corners_dot_type' => ['required', 'in:' . implode(',', self::CORNERS_DOT_TYPES)],
+        ], [
+            'slug.regex' => 'La ruta solo puede contener letras, números, guiones, puntos y barras.',
         ]);
+
+        $data['url'] = self::BASE_URL . '/' . ltrim($data['slug'], '/');
+        unset($data['slug']);
 
         $qr = QrCode::create($data);
 
