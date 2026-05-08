@@ -128,6 +128,19 @@
                 </p>
                 <p x-show="errors.slug || errors.url" x-text="errors.slug || errors.url" class="text-sm text-rose-400 mt-2"></p>
 
+                {{-- Aviso de longitud recomendada --}}
+                <div x-show="form.slug.length > 8" x-transition
+                     class="mt-4 flex items-start gap-2.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.06] px-3.5 py-2.5">
+                    <svg class="w-3.5 h-3.5 mt-0.5 shrink-0 text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                        <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 3.5h.01"/>
+                    </svg>
+                    <p class="text-[11.5px] leading-snug text-rose-100/90">
+                        Has superado los <strong class="text-white">8 caracteres</strong> recomendados
+                        (<span class="font-mono text-rose-300" x-text="form.slug.length"></span>).
+                        Solo garantizamos la correcta legibilidad del QR dentro de ese límite.
+                    </p>
+                </div>
+
                 {{-- Aviso de inmutabilidad --}}
                 <div class="mt-8 relative overflow-hidden rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.03] to-white/[0.01]">
                     <span aria-hidden="true" class="absolute inset-y-0 left-0 w-[3px]" style="background:linear-gradient(180deg,#ff4d4d,#b30000);"></span>
@@ -142,7 +155,7 @@
                             <span class="text-[10px] font-bold uppercase tracking-[0.14em] text-rose-400 leading-none">Importante</span>
                             <span class="h-px flex-1 bg-gradient-to-r from-rose-500/30 to-transparent"></span>
                         </div>
-                        <p class="text-[12.5px] leading-relaxed text-slate-300">
+                        <p class="pl-7 text-[12.5px] leading-relaxed text-slate-300">
                             Una vez generado el QR de forma definitiva, <strong class="text-white font-semibold">la URL no podrá modificarse</strong>. Asegúrate de que el destino es correcto antes de guardar.
                         </p>
                     </div>
@@ -441,9 +454,9 @@
                 slug: '',
                 url: '',
                 color: '#000000',
-                dots_type: 'square',
-                corners_square_type: 'square',
-                corners_dot_type: 'square',
+                dots_type: 'rounded',
+                corners_square_type: 'extra-rounded',
+                corners_dot_type: 'dot',
             },
             errors: {},
             saving: false,

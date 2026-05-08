@@ -12,15 +12,15 @@ class QrCodeController extends Controller
     public const BASE_URL = 'https://d-tattoo.com';
 
     public const DOTS_TYPES = [
-        'square', 'dots', 'rounded', 'extra-rounded',
+        'dots', 'rounded', 'extra-rounded',
     ];
 
     public const CORNERS_SQUARE_TYPES = [
-        'square', 'dot', 'extra-rounded',
+        'dot', 'extra-rounded',
     ];
 
     public const CORNERS_DOT_TYPES = [
-        'square', 'dot',
+        'dot',
     ];
 
     public function create()
