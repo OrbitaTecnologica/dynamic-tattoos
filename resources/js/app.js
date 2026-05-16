@@ -1,7 +1,7 @@
-import './bootstrap';
-
 import Alpine from 'alpinejs';
+import QRCodeStyling from 'qr-code-styling';
 
-// Livewire 3 arranca Alpine internamente.
-// Solo exponemos la referencia global para que otros scripts puedan usarla.
 window.Alpine = Alpine;
+window.QRCodeStyling = QRCodeStyling;
+
+Alpine.start();
