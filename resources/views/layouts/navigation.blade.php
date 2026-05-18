@@ -15,8 +15,11 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('qr.create')" :active="request()->routeIs('qr.*')">
+                        {{ __('QR Studio') }}
+                    </x-nav-link>
                     <x-nav-link :href="route('billing')" :active="request()->routeIs('billing')">
-                        {{ __('Facturacion') }}
+                        {{ __('Facturación') }}
                     </x-nav-link>
                 </div>
             </div>
@@ -73,8 +76,11 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('qr.create')" :active="request()->routeIs('qr.*')">
+                {{ __('QR Studio') }}
+            </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('billing')" :active="request()->routeIs('billing')">
-                {{ __('Facturacion') }}
+                {{ __('Facturación') }}
             </x-responsive-nav-link>
         </div>
 

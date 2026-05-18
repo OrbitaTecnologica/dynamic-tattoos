@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class QrCode extends Model
+final class QrCode extends Model
 {
     protected $fillable = [
         'url',

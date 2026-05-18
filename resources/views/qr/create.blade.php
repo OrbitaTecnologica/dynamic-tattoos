@@ -74,7 +74,9 @@
 <div
     x-data="qrBuilder({
         storeUrl: @js(route('qr.store')),
+        emailUrl: @js(route('qr.email')),
         baseUrl: @js($baseUrl),
+        initialSlug: @js($initialSlug),
         csrf: document.querySelector('meta[name=csrf-token]').content,
     })"
     x-init="init()"
@@ -451,8 +453,8 @@
             cornersSquareTypes: buildOptions(@json($cornersSquareTypes), SHAPES.cornersSquare),
             cornersDotTypes: buildOptions(@json($cornersDotTypes), SHAPES.cornersDot),
             form: {
-                slug: '',
-                url: '',
+                slug: config.initialSlug || '',
+                url: config.initialSlug ? `${config.baseUrl}/${config.initialSlug}` : '',
                 color: '#000000',
                 dots_type: 'rounded',
                 corners_square_type: 'extra-rounded',
@@ -554,7 +556,7 @@
                         reader.onerror = reject;
                         reader.readAsDataURL(blob);
                     });
-                    const res = await fetch(@js(route('qr.send-email')), {
+                    const res = await fetch(config.emailUrl, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
