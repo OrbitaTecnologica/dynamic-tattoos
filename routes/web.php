@@ -7,3 +7,5 @@ Route::get('/', [QrCodeController::class, 'create'])->name('qr.create');
 Route::post('/qr', [QrCodeController::class, 'store'])->name('qr.store');
 Route::post('/qr/send-email', [QrCodeController::class, 'sendEmail'])->name('qr.send-email');
 Route::get('/qr/history', [QrCodeController::class, 'history'])->name('qr.history');
+
+Route::view('/perfil', 'profile.index')->name('profile.index');

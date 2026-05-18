@@ -80,6 +80,21 @@
     x-init="init()"
     class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14"
 >
+    {{-- Botón acceso a panel de usuario --}}
+    <div class="fixed top-4 right-4 z-50">
+        <a href="{{ route('profile.index') }}"
+           class="group inline-flex items-center gap-2.5 px-4 py-2 rounded-full
+                  bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-rose-500/40
+                  backdrop-blur-md transition-all duration-200 shadow-lg shadow-black/20">
+            <span class="hidden sm:flex flex-col leading-tight">
+                <span class="text-[13px] font-medium text-white">Mi cuenta</span>
+                <span class="text-[10px] text-slate-400 group-hover:text-rose-300 transition-colors">Panel de usuario</span>
+            </span>
+            <span class="sm:hidden text-[13px] font-medium text-white">Mi cuenta</span>
+            <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-300 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </a>
+    </div>
+
     <header class="mb-10 lg:mb-14 text-center">
         <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">
             Crea tu Código QR personalizado
