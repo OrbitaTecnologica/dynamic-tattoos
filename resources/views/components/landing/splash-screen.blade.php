@@ -7,7 +7,7 @@
 @php
     $resolvedLogoSrc = \Illuminate\Support\Facades\Storage::disk('public')->exists($uploadedLogoPath)
         ? \Illuminate\Support\Facades\Storage::url($uploadedLogoPath)
-        : ($logoSrc ?? '/favicon.ico');
+        : ($logoSrc ?? asset('images/logo.jpeg'));
 @endphp
 
 <div
