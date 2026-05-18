@@ -588,15 +588,22 @@
 
         /* Tabs horizontales */
         .tabs-bar {
-            display: flex; align-items: center; gap: .25rem;
-            padding: .35rem;
+            display: flex; align-items: center; gap: .35rem;
+            padding: .4rem;
             background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 14px;
             overflow-x: auto;
-            scrollbar-width: none;
+            overflow-y: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.18) transparent;
+            -webkit-overflow-scrolling: touch;
+            scroll-snap-type: x proximity;
         }
-        .tabs-bar::-webkit-scrollbar { display: none; }
+        .tabs-bar::-webkit-scrollbar { height: 6px; }
+        .tabs-bar::-webkit-scrollbar-track { background: transparent; }
+        .tabs-bar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 9999px; }
+        .tabs-bar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
 
         /* Botones del top-bar (idioma / moneda / cerrar sesión) */
         .topbar-btn {
@@ -634,11 +641,12 @@
         .popover-item.active { background: linear-gradient(135deg, rgba(180,0,0,0.18), rgba(180,0,0,0.05)); color: #fff; }
         .popover-item .flag { font-size: 1rem; line-height: 1; }
         .tab-btn {
-            display: inline-flex; align-items: center; gap: .5rem;
-            padding: .55rem .9rem;
+            display: inline-flex; align-items: center; gap: .55rem;
+            padding: .7rem 1.15rem;
+            min-height: 42px;
             border-radius: 10px;
             color: #94a3b8;
-            font-size: .82rem;
+            font-size: .85rem;
             font-weight: 500;
             white-space: nowrap;
             cursor: pointer;
@@ -646,6 +654,7 @@
             background: transparent;
             transition: all .15s ease;
             flex-shrink: 0;
+            scroll-snap-align: start;
         }
         .tab-btn:hover { color: #e2e8f0; background: rgba(255,255,255,0.04); }
         .tab-btn .tab-icon { width: 16px; height: 16px; flex-shrink: 0; }
@@ -660,6 +669,151 @@
             color: #fff;
             background: linear-gradient(135deg, rgba(220,38,38,0.30), rgba(220,38,38,0.10));
             border-color: rgba(220,38,38,0.55);
+        }
+        .tab-btn.studio {
+            color: #fda4af;
+            border-color: rgba(255,51,51,0.18);
+            background: linear-gradient(135deg, rgba(180,0,0,0.10), rgba(180,0,0,0.02));
+            text-decoration: none;
+            margin-left: .5rem;
+            position: relative;
+        }
+        .tab-btn.studio::before {
+            content: '';
+            position: absolute;
+            left: -.5rem;
+            top: 20%;
+            bottom: 20%;
+            width: 1px;
+            background: rgba(255,255,255,0.10);
+        }
+        .tab-btn.studio:hover {
+            color: #fff;
+            border-color: rgba(255,51,51,0.45);
+            background: linear-gradient(135deg, rgba(180,0,0,0.22), rgba(180,0,0,0.06));
+        }
+
+        /* ===== Responsive: móvil ===== */
+        @media (max-width: 768px) {
+            main { padding-left: 1rem !important; padding-right: 1rem !important; }
+
+            /* Top-bar: a la izquierda y compacto */
+            .topbar-btn { padding: .45rem .7rem; font-size: .75rem; }
+
+            /* Hero compacto */
+            .glass.rounded-2xl { padding: 1.25rem !important; }
+            section.glass { padding: 1.25rem !important; }
+        }
+        @media (max-width: 640px) {
+            /* Menu vertical */
+            .tabs-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: .2rem;
+                padding: .4rem;
+                overflow-x: visible;
+            }
+            .tab-btn {
+                width: 100%;
+                justify-content: flex-start;
+                padding: .7rem .85rem;
+                font-size: .85rem;
+                border-radius: 10px;
+            }
+            .tab-btn.studio { margin-left: 0; margin-top: .35rem; }
+            .tab-btn.studio::before { display: none; }
+            .tab-btn .tab-icon { width: 18px; height: 18px; }
+
+            /* Hero: avatar y acciones más compactos */
+            .glass h1 { font-size: 1.35rem !important; }
+            .btn-primary, .btn-secondary { font-size: .8rem; }
+
+            /* Tarjetas y formularios con menos padding */
+            .glass.p-6, .glass.sm\:p-8 { padding: 1.1rem !important; }
+
+            /* Grids de campos: una sola columna */
+            .grid.sm\:grid-cols-2 { grid-template-columns: 1fr !important; }
+
+            /* Inputs un poco más grandes para el touch */
+            .input { font-size: .9rem; padding: .65rem .85rem; }
+
+            /* Acciones del hero: stack vertical y full width */
+            .glass .btn-primary, .glass .btn-secondary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        /* ===== Acciones del hero ===== */
+        .hero-actions { min-width: 0; max-width: 100%; }
+        /* Cuando se hace wrap (no cabe en una sola fila junto a la identidad), ocupa toda la fila y centra */
+        @media (max-width: 1024px) {
+            .hero-actions {
+                width: 100%;
+                justify-content: center !important;
+            }
+        }
+
+        /* ===== Hamburguesa móvil ===== */
+        .nav-mobile-toggle { display: none; }
+        @media (max-width: 640px) {
+            .nav-wrapper { position: relative; }
+            .nav-mobile-toggle {
+                display: flex;
+                width: 100%;
+                align-items: center;
+                justify-content: space-between;
+                gap: .75rem;
+                padding: .85rem 1rem;
+                background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
+                border: 1px solid rgba(255,255,255,0.10);
+                border-radius: 12px;
+                color: #fff;
+                font-size: .9rem;
+                font-weight: 500;
+                cursor: pointer;
+            }
+            .nav-mobile-current { display: inline-flex; align-items: center; gap: .6rem; min-width: 0; }
+            .nav-mobile-current .tab-icon { width: 18px; height: 18px; color: #fb7185; flex-shrink: 0; }
+            .nav-mobile-current span:last-child {
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            }
+            .nav-mobile-burger {
+                position: relative;
+                width: 22px; height: 16px;
+                flex-shrink: 0;
+            }
+            .nav-mobile-burger span {
+                position: absolute; left: 0; right: 0; height: 2px;
+                background: #cbd5e1; border-radius: 2px;
+                transition: transform .25s ease, opacity .2s ease, top .25s ease;
+            }
+            .nav-mobile-burger span:nth-child(1) { top: 0; }
+            .nav-mobile-burger span:nth-child(2) { top: 7px; }
+            .nav-mobile-burger span:nth-child(3) { top: 14px; }
+            .nav-mobile-burger.is-open span:nth-child(1) { top: 7px; transform: rotate(45deg); }
+            .nav-mobile-burger.is-open span:nth-child(2) { opacity: 0; }
+            .nav-mobile-burger.is-open span:nth-child(3) { top: 7px; transform: rotate(-45deg); }
+
+            /* Oculta el menú por defecto, lo despliega cuando is-open */
+            .tabs-bar {
+                display: none !important;
+                margin-top: .5rem;
+            }
+            .tabs-bar.is-open {
+                display: flex !important;
+                animation: fade .2s ease;
+            }
+        }
+        @media (max-width: 420px) {
+            /* Avatar más pequeño */
+            section.glass [style*="width:96px"] {
+                width: 76px !important;
+                height: 76px !important;
+            }
+            section.glass [style*="width:96px"] > div:first-child {
+                width: 76px !important; height: 76px !important;
+                font-size: 1.5rem !important;
+            }
         }
     </style>
 </head>
@@ -778,7 +932,7 @@
                 </div>
 
                 {{-- Acciones rápidas --}}
-                <div style="display:flex; gap:.5rem; flex-shrink:0; flex-wrap:wrap;">
+                <div class="hero-actions" style="display:flex; gap:.5rem; flex-wrap:wrap; justify-content:flex-end;">
                     <a href="{{ route('qr.create') }}" class="btn-secondary" style="padding:.55rem 1rem; border-radius:.6rem; font-size:.8rem; display:inline-flex; align-items:center; gap:.45rem; text-decoration:none;" :title="t('openStudioDesc')">
                         <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1v1h-1zM14 20h3v1h-3zM20 17h1v4M17 20h3"/></svg>
                         <span x-text="t('openStudio')"></span>
@@ -825,14 +979,34 @@
     </section>
 
     {{-- Tabs horizontales --}}
-    <nav class="tabs-bar" style="margin-bottom:1.5rem;">
-        <template x-for="item in nav" :key="item.id">
-            <button type="button" class="tab-btn" :class="{ active: tab === item.id, danger: item.id === 'danger' }" @click="tab = item.id">
-                <span class="tab-icon" x-html="item.icon"></span>
-                <span x-text="item.label"></span>
-            </button>
-        </template>
-    </nav>
+    <div class="nav-wrapper" style="margin-bottom:1.5rem;" @click.outside="navOpen = false">
+        {{-- Cabecera móvil: hamburguesa + tab activa --}}
+        <button type="button" class="nav-mobile-toggle" @click="navOpen = !navOpen" :aria-expanded="navOpen ? 'true' : 'false'">
+            <span class="nav-mobile-current">
+                <span class="tab-icon" x-html="(nav.find(i => i.id === tab) || nav[0]).icon"></span>
+                <span x-text="(nav.find(i => i.id === tab) || nav[0]).label"></span>
+            </span>
+            <span class="nav-mobile-burger" :class="{ 'is-open': navOpen }" aria-hidden="true">
+                <span></span><span></span><span></span>
+            </span>
+        </button>
+
+        <nav class="tabs-bar" :class="{ 'is-open': navOpen }">
+            <template x-for="item in nav" :key="item.id">
+                <a :href="item.href || '#'"
+                   class="tab-btn"
+                   :class="item.href
+                            ? 'studio'
+                            : { active: tab === item.id, danger: item.id === 'danger' }"
+                   :title="item.href ? t('openStudioDesc') : item.label"
+                   @click="if (!item.href) { $event.preventDefault(); tab = item.id; navOpen = false; }">
+                    <span class="tab-icon" x-html="item.icon"></span>
+                    <span x-text="item.label"></span>
+                    <svg x-show="item.href" style="width:12px;height:12px;opacity:.7;margin-left:auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
+                </a>
+            </template>
+        </nav>
+    </div>
 
     {{-- Contenido --}}
     <div>
@@ -1538,6 +1712,7 @@
     function profilePanel() {
         return {
             tab: 'general',
+            navOpen: false,
             openUpgrade: false,
             confirmDelete: false,
             deleteConfirmText: '',
@@ -1600,10 +1775,11 @@
                     nav_general: 'Información general',
                     nav_security: 'Seguridad y contraseña',
                     nav_notifications: 'Notificaciones',
-                    nav_storage: 'Almacenamiento y plan',
+                    nav_storage: 'Suscripción y pagos',
                     nav_team: 'Equipo',
                     nav_activity: 'Actividad',
                     nav_danger: 'Acciones avanzadas',
+                    nav_studio: 'Abrir QR Studio',
                 },
                 en: {
                     backToStudio: 'Back to QR Studio',
@@ -1624,10 +1800,11 @@
                     nav_general: 'General info',
                     nav_security: 'Security & password',
                     nav_notifications: 'Notifications',
-                    nav_storage: 'Storage & plan',
+                    nav_storage: 'Subscription & billing',
                     nav_team: 'Team',
                     nav_activity: 'Activity',
                     nav_danger: 'Danger zone',
+                    nav_studio: 'Open QR Studio',
                 },
                 pt: {
                     backToStudio: 'Voltar ao QR Studio',
@@ -1648,10 +1825,11 @@
                     nav_general: 'Informação geral',
                     nav_security: 'Segurança e palavra-passe',
                     nav_notifications: 'Notificações',
-                    nav_storage: 'Armazenamento e plano',
+                    nav_storage: 'Subscrição e pagamentos',
                     nav_team: 'Equipa',
                     nav_activity: 'Atividade',
                     nav_danger: 'Zona de perigo',
+                    nav_studio: 'Abrir QR Studio',
                 },
                 fr: {
                     backToStudio: 'Retour au QR Studio',
@@ -1672,10 +1850,11 @@
                     nav_general: 'Informations générales',
                     nav_security: 'Sécurité et mot de passe',
                     nav_notifications: 'Notifications',
-                    nav_storage: 'Stockage et forfait',
+                    nav_storage: 'Abonnement et paiements',
                     nav_team: 'Équipe',
                     nav_activity: 'Activité',
                     nav_danger: 'Zone dangereuse',
+                    nav_studio: 'Ouvrir QR Studio',
                 },
                 de: {
                     backToStudio: 'Zurück zum QR Studio',
@@ -1696,10 +1875,11 @@
                     nav_general: 'Allgemeine Informationen',
                     nav_security: 'Sicherheit & Passwort',
                     nav_notifications: 'Benachrichtigungen',
-                    nav_storage: 'Speicher & Tarif',
+                    nav_storage: 'Abonnement & Zahlungen',
                     nav_team: 'Team',
                     nav_activity: 'Aktivität',
                     nav_danger: 'Gefahrenzone',
+                    nav_studio: 'QR Studio öffnen',
                 },
             },
             security: { twoFA: true, newPassword: '' },
@@ -1774,10 +1954,11 @@
                 { id: 'general',       icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"7\" r=\"4\"/><path d=\"M5.5 21a6.5 6.5 0 0113 0\"/></svg>' },
                 { id: 'security',      icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"11\" width=\"18\" height=\"11\" rx=\"2\"/><path d=\"M7 11V7a5 5 0 0110 0v4\"/></svg>' },
                 { id: 'notifications', icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9\"/><path d=\"M13.73 21a2 2 0 01-3.46 0\"/></svg>' },
-                { id: 'storage',       icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><ellipse cx=\"12\" cy=\"5\" rx=\"9\" ry=\"3\"/><path d=\"M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5\"/><path d=\"M3 12c0 1.66 4 3 9 3s9-1.34 9-3\"/></svg>' },
+                { id: 'storage',       icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><line x1=\"2\" y1=\"10\" x2=\"22\" y2=\"10\"/></svg>' },
                 { id: 'team',          icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75\"/></svg>' },
                 { id: 'activity',      icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"22 12 18 12 15 21 9 3 6 12 2 12\"/></svg>' },
                 { id: 'danger',        icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z\"/><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"/><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"/></svg>' },
+                { id: 'studio',        href: '{{ route('qr.create') }}', icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><path d=\"M14 14h3v3h-3zM20 14h1v1h-1zM14 20h3v1h-3zM20 17h1v4M17 20h3\"/></svg>' },
             ],
             get nav() {
                 return this.navItems.map(it => ({ ...it, label: this.t('nav_' + it.id) }));
