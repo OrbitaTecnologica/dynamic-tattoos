@@ -56,6 +56,9 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::post('/dashboard/qr-studio', [QrCodeController::class, 'store'])->name('qr.store');
     Route::get('/dashboard/qr-studio/history', [QrCodeController::class, 'history'])->name('qr.history');
     Route::post('/dashboard/qr-studio/email', [QrCodeController::class, 'sendEmail'])->name('qr.email');
+
+    // Client profile panel
+    Route::view('/perfil', 'profile.index')->name('profile.index');
 });
 
 Route::middleware('auth')->group(function (): void {

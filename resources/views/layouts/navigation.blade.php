@@ -21,6 +21,9 @@
                     <x-nav-link :href="route('billing')" :active="request()->routeIs('billing')">
                         {{ __('Facturación') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('profile.index')" :active="request()->routeIs('profile.index')">
+                        {{ __('Mi cuenta') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -81,6 +84,9 @@
             </x-responsive-nav-link>
             <x-responsive-nav-link :href="route('billing')" :active="request()->routeIs('billing')">
                 {{ __('Facturación') }}
+            </x-responsive-nav-link>
+            <x-responsive-nav-link :href="route('profile.index')" :active="request()->routeIs('profile.index')">
+                {{ __('Mi cuenta') }}
             </x-responsive-nav-link>
         </div>
 

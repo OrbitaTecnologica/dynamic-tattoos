@@ -863,13 +863,16 @@
         </div>
 
         {{-- Cerrar sesión --}}
-        <button type="button"
-                style="display:inline-flex; align-items:center; gap:.5rem; padding:.5rem 1rem; border-radius:9999px; font-size:.8rem; font-weight:500; color:#fca5a5; background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.30); transition:all .18s ease; cursor:pointer;"
-                onmouseover="this.style.background='rgba(220,38,38,0.18)';this.style.borderColor='rgba(220,38,38,0.60)';this.style.color='#fff'"
-                onmouseout="this.style.background='rgba(220,38,38,0.08)';this.style.borderColor='rgba(220,38,38,0.30)';this.style.color='#fca5a5'">
-            <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-            <span x-text="t('logout')"></span>
-        </button>
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit"
+                    style="display:inline-flex; align-items:center; gap:.5rem; padding:.5rem 1rem; border-radius:9999px; font-size:.8rem; font-weight:500; color:#fca5a5; background:rgba(220,38,38,0.08); border:1px solid rgba(220,38,38,0.30); transition:all .18s ease; cursor:pointer;"
+                    onmouseover="this.style.background='rgba(220,38,38,0.18)';this.style.borderColor='rgba(220,38,38,0.60)';this.style.color='#fff'"
+                    onmouseout="this.style.background='rgba(220,38,38,0.08)';this.style.borderColor='rgba(220,38,38,0.30)';this.style.color='#fca5a5'">
+                <svg style="width:14px;height:14px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                <span x-text="t('logout')"></span>
+            </button>
+        </form>
     </div>
 </div>
 
