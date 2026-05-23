@@ -7,15 +7,22 @@ namespace App\Listeners;
 use App\Jobs\SendSubscriptionNotificationJob;
 use App\Jobs\SyncUserPlanJob;
 use App\Models\User;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Laravel\Cashier\Events\WebhookHandled;
 
 final class HandleCashierWebhook
 {
     public function handle(WebhookHandled $event): void
     {
+        $eventId = $event->payload['id'] ?? null;
         $type = $event->payload['type'] ?? null;
 
-        if (! is_string($type)) {
+        if (! is_string($eventId) || $eventId === '' || ! is_string($type) || $type === '') {
+            return;
+        }
+
+        if (! $this->markAsProcessed($eventId, $type, $event->payload)) {
             return;
         }
 
@@ -52,23 +59,51 @@ final class HandleCashierWebhook
 
     private function handleCreated(int $userId): void
     {
-        SyncUserPlanJob::dispatch($userId);
+        SyncUserPlanJob::dispatchSync($userId);
         SendSubscriptionNotificationJob::dispatch($userId, 'activated');
     }
 
     private function handleUpdated(int $userId): void
     {
-        SyncUserPlanJob::dispatch($userId);
+        SyncUserPlanJob::dispatchSync($userId);
     }
 
     private function handleDeleted(int $userId): void
     {
-        SyncUserPlanJob::dispatch($userId);
+        SyncUserPlanJob::dispatchSync($userId);
         SendSubscriptionNotificationJob::dispatch($userId, 'cancelled');
     }
 
     private function handlePaymentFailed(int $userId): void
     {
         SendSubscriptionNotificationJob::dispatch($userId, 'failed');
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function markAsProcessed(string $eventId, string $type, array $payload): bool
+    {
+        try {
+            DB::table('stripe_webhook_events')->insert([
+                'stripe_event_id' => $eventId,
+                'type' => $type,
+                'payload' => json_encode($payload, JSON_THROW_ON_ERROR),
+                'processed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return true;
+        } catch (QueryException $exception) {
+            // SQLSTATE 23000 = integrity constraint violation (duplicate unique key).
+            if ((string) $exception->getCode() === '23000') {
+                return false;
+            }
+
+            throw $exception;
+        } catch (\JsonException) {
+            return false;
+        }
     }
 }
