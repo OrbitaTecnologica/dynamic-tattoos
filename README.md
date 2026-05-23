@@ -172,6 +172,27 @@ routes/
 
 ---
 
+## API Contract (OpenAPI)
+
+The API v1 contract is documented in:
+
+- `docs/api/openapi.yaml`
+
+It covers auth, tattoos, plans, billing, and the standardized API error envelope (`401`, `403`, `404`, `422`).
+
+You can validate or visualize it with tools like Swagger Editor or Redoc.
+
+Local docs endpoints:
+
+- `/docs/api` (Redoc UI)
+- `/docs/api/openapi.yaml` (raw OpenAPI YAML)
+
+E2E operations runbook:
+
+- `docs/operations/stripe-test-mode-e2e.md`
+
+---
+
 ## Content Types
 
 Each tattoo has one active `TattooContent` row. The `payload` JSON column structure varies by type:

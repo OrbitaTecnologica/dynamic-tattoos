@@ -18,6 +18,17 @@ use Illuminate\Support\Facades\Route;
 */
 Route::view('/', 'welcome')->name('home');
 
+Route::view('/docs/api', 'docs.api')->name('docs.api');
+Route::get('/docs/api/openapi.yaml', static function () {
+    $openApiPath = base_path('docs/api/openapi.yaml');
+
+    abort_unless(file_exists($openApiPath), 404);
+
+    return response()->file($openApiPath, [
+        'Content-Type' => 'application/yaml; charset=UTF-8',
+    ]);
+})->name('docs.api.spec');
+
 /*
 |--------------------------------------------------------------------------
 | Public QR Redirect Route

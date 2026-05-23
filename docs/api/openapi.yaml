@@ -1,0 +1,985 @@
+openapi: 3.1.0
+info:
+  title: Dynamic Tattoos API
+  version: 1.0.0
+  description: |
+    Contract for API v1 endpoints (auth, tattoos, plans, billing).
+    Error shape follows the standardized format:
+
+    {
+      "error": {
+        "code": "unauthorized|forbidden|not_found|validation_error|http_error",
+        "message": "string",
+        "status": 401,
+        "errors": {"field": ["message"]}
+      }
+    }
+servers:
+  - url: /api/v1
+    description: API v1
+security:
+  - BearerAuth: []
+tags:
+  - name: Auth
+  - name: Tattoos
+  - name: Plans
+  - name: Billing
+  - name: Admin
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      security: []
+      summary: Login and create Sanctum token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '201':
+          description: Token created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error422'
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get authenticated user profile
+      responses:
+        '200':
+          description: Authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke current token
+      responses:
+        '200':
+          description: Token revoked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Token revoked successfully.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /plans:
+    get:
+      tags: [Plans]
+      summary: List active plans for authenticated users
+      responses:
+        '200':
+          description: Active plans list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanCollectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /admin/plans:
+    get:
+      tags: [Admin]
+      summary: List all plans (admin)
+      responses:
+        '200':
+          description: Plans list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanCollectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Admin]
+      summary: Create plan (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanStoreRequest'
+      responses:
+        '201':
+          description: Plan created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /admin/plans/{plan}:
+    patch:
+      tags: [Admin]
+      summary: Update plan (admin)
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanUpdateRequest'
+      responses:
+        '200':
+          description: Plan updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Admin]
+      summary: Delete plan (admin)
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      responses:
+        '204':
+          description: Plan deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /billing/subscription:
+    get:
+      tags: [Billing]
+      summary: Subscription summary
+      responses:
+        '200':
+          description: Subscription info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscriptionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /billing/subscription/cancel:
+    post:
+      tags: [Billing]
+      summary: Schedule subscription cancellation
+      responses:
+        '200':
+          description: Cancellation scheduled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscriptionActionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /billing/subscription/resume:
+    post:
+      tags: [Billing]
+      summary: Resume subscription in grace period
+      responses:
+        '200':
+          description: Subscription resumed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BillingSubscriptionActionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /billing/checkout/{plan}:
+    post:
+      tags: [Billing]
+      summary: Create Stripe checkout URL
+      parameters:
+        - $ref: '#/components/parameters/PlanId'
+      responses:
+        '200':
+          description: Checkout URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      checkout_url:
+                        type: string
+                        format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /billing/portal:
+    post:
+      tags: [Billing]
+      summary: Create Stripe billing portal URL
+      responses:
+        '200':
+          description: Portal URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      portal_url:
+                        type: string
+                        format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tattoos:
+    get:
+      tags: [Tattoos]
+      summary: List current user tattoos
+      responses:
+        '200':
+          description: Paginated tattoos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooCollectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Tattoos]
+      summary: Create tattoo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TattooStoreRequest'
+      responses:
+        '201':
+          description: Tattoo created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tattoos/{tattoo}:
+    get:
+      tags: [Tattoos]
+      summary: Get tattoo by id
+      parameters:
+        - $ref: '#/components/parameters/TattooId'
+      responses:
+        '200':
+          description: Tattoo details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Tattoos]
+      summary: Update tattoo
+      parameters:
+        - $ref: '#/components/parameters/TattooId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TattooUpdateRequest'
+      responses:
+        '200':
+          description: Tattoo updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      tags: [Tattoos]
+      summary: Delete tattoo
+      parameters:
+        - $ref: '#/components/parameters/TattooId'
+      responses:
+        '204':
+          description: Tattoo deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tattoos/{tattoo}/contents:
+    get:
+      tags: [Tattoos]
+      summary: List tattoo contents
+      parameters:
+        - $ref: '#/components/parameters/TattooId'
+      responses:
+        '200':
+          description: Paginated contents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooContentCollectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /tattoos/{tattoo}/contents/activate:
+    post:
+      tags: [Tattoos]
+      summary: Create and activate tattoo content
+      parameters:
+        - $ref: '#/components/parameters/TattooId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivateTattooContentRequest'
+      responses:
+        '201':
+          description: Content activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooContentResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /tattoos/{tattoo}/scans:
+    get:
+      tags: [Tattoos]
+      summary: List tattoo scans
+      parameters:
+        - $ref: '#/components/parameters/TattooId'
+      responses:
+        '200':
+          description: Paginated scans
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TattooScanCollectionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Sanctum
+
+  parameters:
+    PlanId:
+      name: plan
+      in: path
+      required: true
+      schema:
+        type: integer
+    TattooId:
+      name: tattoo
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error401'
+    Forbidden:
+      description: Not authorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error403'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error404'
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error422'
+
+  schemas:
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        device_name:
+          type: string
+          maxLength: 100
+          nullable: true
+
+    PlanStoreRequest:
+      type: object
+      required: [name, billing_cycle, price, features, max_tattoos]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        billing_cycle:
+          type: string
+          enum: [monthly, yearly, lifetime]
+        stripe_price_id:
+          type: string
+          nullable: true
+        price:
+          type: number
+          minimum: 0
+        features:
+          type: array
+          items:
+            type: string
+            maxLength: 255
+        max_tattoos:
+          type: integer
+          minimum: 1
+          maximum: 999
+        is_active:
+          type: boolean
+          default: true
+        sort_order:
+          type: integer
+          minimum: 0
+          default: 0
+
+    PlanUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        billing_cycle:
+          type: string
+          enum: [monthly, yearly, lifetime]
+        stripe_price_id:
+          type: string
+          nullable: true
+        price:
+          type: number
+          minimum: 0
+        features:
+          type: array
+          items:
+            type: string
+            maxLength: 255
+        max_tattoos:
+          type: integer
+          minimum: 1
+          maximum: 999
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+          minimum: 0
+
+    TattooStoreRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+
+    TattooUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+
+    ActivateTattooContentRequest:
+      type: object
+      required: [type, payload]
+      properties:
+        type:
+          type: string
+          enum: [link, gallery, video]
+        payload:
+          oneOf:
+            - $ref: '#/components/schemas/LinkPayload'
+            - $ref: '#/components/schemas/GalleryPayload'
+            - $ref: '#/components/schemas/VideoPayload'
+
+    LoginResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            token_type:
+              type: string
+              example: Bearer
+            user:
+              $ref: '#/components/schemas/User'
+
+    UserResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/User'
+
+    PlanResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Plan'
+
+    PlanCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Plan'
+
+    TattooResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/Tattoo'
+
+    TattooCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tattoo'
+        links:
+          type: object
+          additionalProperties: true
+        meta:
+          type: object
+          additionalProperties: true
+
+    TattooContentResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/TattooContent'
+
+    TattooContentCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TattooContent'
+        links:
+          type: object
+          additionalProperties: true
+        meta:
+          type: object
+          additionalProperties: true
+
+    TattooScanCollectionResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TattooScan'
+        links:
+          type: object
+          additionalProperties: true
+        meta:
+          type: object
+          additionalProperties: true
+
+    BillingSubscriptionResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/BillingSubscriptionData'
+
+    BillingSubscriptionActionResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          $ref: '#/components/schemas/BillingSubscriptionData'
+
+    BillingSubscriptionData:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [sin_plan, grace_period, cancelada, activa, inactiva]
+        plan:
+          oneOf:
+            - $ref: '#/components/schemas/Plan'
+            - type: 'null'
+        stripe:
+          type: object
+          properties:
+            customer_id:
+              type: string
+              nullable: true
+            subscription_id:
+              type: string
+              nullable: true
+            subscription_price:
+              type: string
+              nullable: true
+            ends_at:
+              type: string
+              format: date-time
+              nullable: true
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        plan_id:
+          type: integer
+          nullable: true
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        slug:
+          type: string
+        price:
+          type: number
+        billing_cycle:
+          type: string
+          enum: [monthly, yearly, lifetime]
+        stripe_price_id:
+          type: string
+          nullable: true
+        features:
+          type: array
+          items:
+            type: string
+        max_tattoos:
+          type: integer
+        is_active:
+          type: boolean
+        sort_order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    Tattoo:
+      type: object
+      properties:
+        id:
+          type: integer
+        short_code:
+          type: string
+        name:
+          type: string
+        is_active:
+          type: boolean
+        qr_url:
+          type: string
+          nullable: true
+        active_content:
+          oneOf:
+            - $ref: '#/components/schemas/TattooContent'
+            - type: 'null'
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TattooContent:
+      type: object
+      properties:
+        id:
+          type: integer
+        tattoo_id:
+          type: integer
+        type:
+          type: string
+          enum: [link, gallery, video]
+        payload:
+          type: object
+          additionalProperties: true
+        is_active:
+          type: boolean
+        order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    TattooScan:
+      type: object
+      properties:
+        id:
+          type: integer
+        tattoo_id:
+          type: integer
+        ip_address:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        city:
+          type: string
+          nullable: true
+        device_type:
+          type: string
+          nullable: true
+        browser:
+          type: string
+          nullable: true
+        user_agent:
+          type: string
+          nullable: true
+        scanned_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    LinkPayload:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+        label:
+          type: string
+          maxLength: 255
+          nullable: true
+        open_in_new_tab:
+          type: boolean
+
+    GalleryPayload:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 255
+          nullable: true
+        images:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            maxLength: 512
+
+    VideoPayload:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 2048
+        platform:
+          type: string
+          enum: [youtube, vimeo, tiktok]
+        autoplay:
+          type: boolean
+        title:
+          type: string
+          maxLength: 255
+          nullable: true
+
+    ErrorBase:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            status:
+              type: integer
+          required: [code, message, status]
+
+    Error401:
+      allOf:
+        - $ref: '#/components/schemas/ErrorBase'
+        - type: object
+          properties:
+            error:
+              properties:
+                code:
+                  const: unauthorized
+                status:
+                  const: 401
+
+    Error403:
+      allOf:
+        - $ref: '#/components/schemas/ErrorBase'
+        - type: object
+          properties:
+            error:
+              properties:
+                code:
+                  const: forbidden
+                status:
+                  const: 403
+
+    Error404:
+      allOf:
+        - $ref: '#/components/schemas/ErrorBase'
+        - type: object
+          properties:
+            error:
+              properties:
+                code:
+                  const: not_found
+                status:
+                  const: 404
+
+    Error422:
+      allOf:
+        - $ref: '#/components/schemas/ErrorBase'
+        - type: object
+          properties:
+            error:
+              properties:
+                code:
+                  const: validation_error
+                status:
+                  const: 422
+                errors:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: string
