@@ -15,6 +15,44 @@ final class StripeWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_webhook_rejects_invalid_signature_when_secret_is_configured(): void
+    {
+        config()->set('cashier.webhook.secret', 'whsec_test_signature');
+
+        $payload = $this->invoicePaymentFailedPayload(
+            eventId: 'evt_signature_invalid_001',
+            customerId: 'cus_signature_invalid',
+        );
+
+        $this->postSignedWebhookPayload(
+            payload: $payload,
+            signatureHeader: 't=123,v1=invalid',
+        )->assertForbidden();
+    }
+
+    public function test_webhook_accepts_valid_signature_when_secret_is_configured(): void
+    {
+        config()->set('cashier.webhook.secret', 'whsec_test_signature');
+
+        $payload = $this->invoicePaymentFailedPayload(
+            eventId: 'evt_signature_valid_001',
+            customerId: 'cus_signature_valid',
+        );
+
+        $this->postSignedWebhookPayload(
+            payload: $payload,
+            signatureHeader: $this->stripeSignatureHeader(
+                payload: $payload,
+                secret: 'whsec_test_signature',
+            ),
+        )->assertOk();
+
+        $this->assertDatabaseHas('stripe_webhook_events', [
+            'stripe_event_id' => 'evt_signature_valid_001',
+            'type' => 'invoice.payment_failed',
+        ]);
+    }
+
     public function test_duplicate_subscription_created_event_is_processed_once_and_syncs_plan(): void
     {
         Queue::fake([SendSubscriptionNotificationJob::class]);
@@ -227,5 +265,39 @@ final class StripeWebhookTest extends TestCase
                 ],
             ],
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function stripeSignatureHeader(array $payload, string $secret): string
+    {
+        $timestamp = now()->timestamp;
+        $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR);
+        $signedPayload = $timestamp . '.' . $payloadJson;
+        $signature = hash_hmac('sha256', $signedPayload, $secret);
+
+        return 't=' . $timestamp . ',v1=' . $signature;
+    }
+
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function postSignedWebhookPayload(array $payload, string $signatureHeader): \Illuminate\Testing\TestResponse
+    {
+        $payloadJson = json_encode($payload, JSON_THROW_ON_ERROR);
+
+        return $this->call(
+            method: 'POST',
+            uri: '/stripe/webhook',
+            parameters: [],
+            cookies: [],
+            files: [],
+            server: [
+                'CONTENT_TYPE' => 'application/json',
+                'HTTP_STRIPE_SIGNATURE' => $signatureHeader,
+            ],
+            content: $payloadJson,
+        );
     }
 }
