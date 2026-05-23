@@ -5,11 +5,11 @@ declare(strict_types=1);
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BillingPortalController;
 use App\Http\Controllers\QrCodeController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SubscriptionCheckoutController;
 use App\Http\Controllers\TattooRedirectController;
 use App\Models\Tattoo;
 use Illuminate\Support\Facades\Route;
-use Laravel\Cashier\Http\Controllers\WebhookController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,7 +27,7 @@ Route::get('/t/{shortCode}', TattooRedirectController::class)
     ->name('tattoo.show')
     ->where('shortCode', '[a-zA-Z0-9]{1,12}');
 
-Route::post('/stripe/webhook', [WebhookController::class, 'handleWebhook'])
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])
     ->name('cashier.webhook');
 
 /*

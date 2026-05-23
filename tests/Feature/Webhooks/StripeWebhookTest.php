@@ -84,6 +84,75 @@ final class StripeWebhookTest extends TestCase
         );
     }
 
+    public function test_subscription_deleted_event_clears_local_plan_and_queues_cancelled_notification(): void
+    {
+        Queue::fake([SendSubscriptionNotificationJob::class]);
+
+        $plan = $this->createPlan('price_delete_monthly');
+
+        $user = User::factory()->create([
+            'stripe_id' => 'cus_test_003',
+            'plan_id' => $plan->id,
+            'plan_expires_at' => now()->addMonth(),
+        ]);
+
+        $createdPayload = $this->subscriptionPayload(
+            eventId: 'evt_sub_created_003',
+            eventType: 'customer.subscription.created',
+            customerId: 'cus_test_003',
+            subscriptionId: 'sub_test_003',
+            priceId: 'price_delete_monthly',
+            status: 'active',
+            currentPeriodEnd: now()->addMonth()->timestamp,
+        );
+
+        $this->postJson('/stripe/webhook', $createdPayload)->assertOk();
+
+        $deletedPayload = [
+            'id' => 'evt_sub_deleted_003',
+            'type' => 'customer.subscription.deleted',
+            'data' => [
+                'object' => [
+                    'id' => 'sub_test_003',
+                    'customer' => 'cus_test_003',
+                ],
+            ],
+        ];
+
+        $this->postJson('/stripe/webhook', $deletedPayload)->assertOk();
+
+        $user->refresh();
+
+        $this->assertNull($user->plan_id);
+
+        Queue::assertPushed(SendSubscriptionNotificationJob::class, function (SendSubscriptionNotificationJob $job) use ($user): bool {
+            return $job->userId === $user->id && $job->eventType === 'cancelled';
+        });
+    }
+
+    public function test_invoice_payment_failed_event_queues_failed_notification_once(): void
+    {
+        Queue::fake([SendSubscriptionNotificationJob::class]);
+
+        $user = User::factory()->create([
+            'stripe_id' => 'cus_test_004',
+        ]);
+
+        $payload = $this->invoicePaymentFailedPayload(
+            eventId: 'evt_invoice_failed_004',
+            customerId: 'cus_test_004',
+        );
+
+        $this->postJson('/stripe/webhook', $payload)->assertOk();
+        $this->postJson('/stripe/webhook', $payload)->assertOk();
+
+        Queue::assertPushed(SendSubscriptionNotificationJob::class, function (SendSubscriptionNotificationJob $job) use ($user): bool {
+            return $job->userId === $user->id && $job->eventType === 'failed';
+        });
+
+        Queue::assertPushed(SendSubscriptionNotificationJob::class, 1);
+    }
+
     private function createPlan(string $stripePriceId): Plan
     {
         return Plan::query()->create([
@@ -138,6 +207,23 @@ final class StripeWebhookTest extends TestCase
                             ],
                         ],
                     ],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function invoicePaymentFailedPayload(string $eventId, string $customerId): array
+    {
+        return [
+            'id' => $eventId,
+            'type' => 'invoice.payment_failed',
+            'data' => [
+                'object' => [
+                    'id' => 'in_' . $eventId,
+                    'customer' => $customerId,
                 ],
             ],
         ];
