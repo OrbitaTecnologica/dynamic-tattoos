@@ -15,6 +15,13 @@ final class StripeWebhookTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config()->set('cashier.webhook.secret', null);
+    }
+
     public function test_webhook_rejects_invalid_signature_when_secret_is_configured(): void
     {
         config()->set('cashier.webhook.secret', 'whsec_test_signature');

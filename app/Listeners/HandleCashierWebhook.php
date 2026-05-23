@@ -9,6 +9,7 @@ use App\Jobs\SyncUserPlanJob;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Laravel\Cashier\Events\WebhookHandled;
 
 final class HandleCashierWebhook
@@ -19,16 +20,36 @@ final class HandleCashierWebhook
         $type = $event->payload['type'] ?? null;
 
         if (! is_string($eventId) || $eventId === '' || ! is_string($type) || $type === '') {
+            Log::warning('stripe.webhook.invalid_payload', [
+                'event_id' => $eventId,
+                'type' => $type,
+            ]);
+
             return;
         }
 
+        Log::info('stripe.webhook.received', [
+            'event_id' => $eventId,
+            'type' => $type,
+        ]);
+
         if (! $this->markAsProcessed($eventId, $type, $event->payload)) {
+            Log::info('stripe.webhook.duplicate_ignored', [
+                'event_id' => $eventId,
+                'type' => $type,
+            ]);
+
             return;
         }
 
         $userId = $this->resolveUserId($event->payload);
 
         if ($userId === null) {
+            Log::warning('stripe.webhook.user_not_found', [
+                'event_id' => $eventId,
+                'type' => $type,
+            ]);
+
             return;
         }
 
@@ -39,6 +60,12 @@ final class HandleCashierWebhook
             'invoice.payment_failed' => $this->handlePaymentFailed($userId),
             default => null,
         };
+
+        Log::info('stripe.webhook.handled', [
+            'event_id' => $eventId,
+            'type' => $type,
+            'user_id' => $userId,
+        ]);
     }
 
     private function resolveUserId(array $payload): ?int
@@ -59,18 +86,18 @@ final class HandleCashierWebhook
 
     private function handleCreated(int $userId): void
     {
-        SyncUserPlanJob::dispatchSync($userId);
+        SyncUserPlanJob::dispatch($userId);
         SendSubscriptionNotificationJob::dispatch($userId, 'activated');
     }
 
     private function handleUpdated(int $userId): void
     {
-        SyncUserPlanJob::dispatchSync($userId);
+        SyncUserPlanJob::dispatch($userId);
     }
 
     private function handleDeleted(int $userId): void
     {
-        SyncUserPlanJob::dispatchSync($userId);
+        SyncUserPlanJob::dispatch($userId);
         SendSubscriptionNotificationJob::dispatch($userId, 'cancelled');
     }
 
@@ -103,6 +130,11 @@ final class HandleCashierWebhook
 
             throw $exception;
         } catch (\JsonException) {
+            Log::error('stripe.webhook.payload_encode_failed', [
+                'event_id' => $eventId,
+                'type' => $type,
+            ]);
+
             return false;
         }
     }

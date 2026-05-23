@@ -6,10 +6,13 @@ namespace App\Jobs;
 
 use App\Models\Plan;
 use App\Models\User;
+use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class SyncUserPlanJob implements ShouldQueue
 {
@@ -53,5 +56,27 @@ final class SyncUserPlanJob implements ShouldQueue
         foreach ($user->tattoos()->select('short_code')->cursor() as $tattoo) {
             Cache::forget("tattoo_content_{$tattoo->short_code}");
         }
+
+        Log::info('billing.plan_sync.completed', [
+            'user_id' => $this->userId,
+            'plan_id' => $plan?->id,
+            'subscription_status' => $subscription?->stripe_status,
+            'subscription_price' => $subscription?->stripe_price,
+            'attempt' => $this->attempts(),
+        ]);
+    }
+
+    public function retryUntil(): DateTimeInterface
+    {
+        return now()->addHours(2);
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error('billing.plan_sync.failed', [
+            'user_id' => $this->userId,
+            'attempts' => $this->attempts(),
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

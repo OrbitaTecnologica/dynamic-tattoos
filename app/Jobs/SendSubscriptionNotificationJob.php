@@ -8,8 +8,11 @@ use App\Models\User;
 use App\Notifications\PaymentFailedNotification;
 use App\Notifications\SubscriptionActivatedNotification;
 use App\Notifications\SubscriptionCancelledNotification;
+use DateTimeInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class SendSubscriptionNotificationJob implements ShouldQueue
 {
@@ -43,9 +46,35 @@ final class SendSubscriptionNotificationJob implements ShouldQueue
         };
 
         if ($notification === null) {
+            Log::warning('billing.notification.unknown_event_type', [
+                'user_id' => $this->userId,
+                'event_type' => $this->eventType,
+            ]);
+
             return;
         }
 
         $user->notify($notification);
+
+        Log::info('billing.notification.sent', [
+            'user_id' => $this->userId,
+            'event_type' => $this->eventType,
+            'attempt' => $this->attempts(),
+        ]);
+    }
+
+    public function retryUntil(): DateTimeInterface
+    {
+        return now()->addHours(1);
+    }
+
+    public function failed(Throwable $exception): void
+    {
+        Log::error('billing.notification.failed', [
+            'user_id' => $this->userId,
+            'event_type' => $this->eventType,
+            'attempts' => $this->attempts(),
+            'error' => $exception->getMessage(),
+        ]);
     }
 }

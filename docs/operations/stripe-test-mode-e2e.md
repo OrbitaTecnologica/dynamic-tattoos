@@ -306,3 +306,55 @@ Mark sign-off as complete only when all items above are checked and validated.
 - QA approval: [ ]
 - Product/operations approval: [ ]
 - Date: [ ]
+
+## 14) Webhook Resilience Policy
+
+This section defines the operational behavior for asynchronous webhook side-effects.
+
+### Retry policy
+
+1. `SyncUserPlanJob` (queue: `payments`):
+  - `tries=5`
+  - `backoff=[30, 60, 120, 300, 600]` seconds
+  - `retryUntil=2 hours`
+2. `SendSubscriptionNotificationJob` (queue: `notifications`):
+  - `tries=3`
+  - `backoff=[30, 90, 180]` seconds
+  - `retryUntil=1 hour`
+
+### Failure handling
+
+1. When retries are exhausted, jobs are recorded in `failed_jobs`.
+2. Failed jobs emit structured error logs including user/event context.
+3. Replay procedure:
+  - Inspect failures: `php artisan queue:failed`
+  - Retry all: `php artisan queue:retry all`
+  - Retry one: `php artisan queue:retry <uuid>`
+  - Remove recovered records: `php artisan queue:forget <uuid>`
+
+### Observability fields
+
+The webhook pipeline emits structured logs with these key fields:
+
+1. `event_id` (Stripe event ID)
+2. `type` (Stripe event type)
+3. `user_id` (resolved local user)
+4. `attempt` or `attempts` (queue retry attempt)
+5. `error` (on failures)
+
+Main log event names:
+
+- `stripe.webhook.received`
+- `stripe.webhook.duplicate_ignored`
+- `stripe.webhook.user_not_found`
+- `stripe.webhook.handled`
+- `billing.plan_sync.completed`
+- `billing.plan_sync.failed`
+- `billing.notification.sent`
+- `billing.notification.failed`
+
+### Monitoring recommendations
+
+1. Alert when `billing.plan_sync.failed` or `billing.notification.failed` appears above baseline.
+2. Alert when `failed_jobs` grows continuously for `payments` or `notifications` queues.
+3. Track duplicate webhook ratio using `stripe.webhook.duplicate_ignored` to detect unexpected replay spikes.
