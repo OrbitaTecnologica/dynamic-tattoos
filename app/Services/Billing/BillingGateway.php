@@ -12,4 +12,8 @@ interface BillingGateway
     public function createCheckoutUrl(User $user, Plan $plan, string $successUrl, string $cancelUrl): string;
 
     public function createPortalUrl(User $user, string $returnUrl): string;
+
+    public function cancelSubscription(User $user, string $subscriptionName = 'default'): void;
+
+    public function resumeSubscription(User $user, string $subscriptionName = 'default'): void;
 }

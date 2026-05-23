@@ -30,6 +30,12 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('/billing/subscription', [BillingSubscriptionController::class, 'show'])
             ->name('api.v1.billing.subscription.show');
+        Route::post('/billing/subscription/cancel', [BillingSubscriptionController::class, 'cancel'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.billing.subscription.cancel');
+        Route::post('/billing/subscription/resume', [BillingSubscriptionController::class, 'resume'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.billing.subscription.resume');
         Route::post('/billing/checkout/{plan}', BillingCheckoutController::class)
             ->middleware('throttle:api-write')
             ->name('api.v1.billing.checkout');

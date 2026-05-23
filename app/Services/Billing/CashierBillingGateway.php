@@ -29,6 +29,16 @@ final class CashierBillingGateway implements BillingGateway
         return $user->billingPortalUrl($returnUrl);
     }
 
+    public function cancelSubscription(User $user, string $subscriptionName = 'default'): void
+    {
+        $user->subscription($subscriptionName)?->cancel();
+    }
+
+    public function resumeSubscription(User $user, string $subscriptionName = 'default'): void
+    {
+        $user->subscription($subscriptionName)?->resume();
+    }
+
     private function extractUrl(mixed $response): string
     {
         if ($response instanceof IlluminateRedirectResponse || $response instanceof SymfonyRedirectResponse) {
