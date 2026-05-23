@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthTokenController;
+use App\Http\Controllers\Api\V1\BillingCheckoutController;
+use App\Http\Controllers\Api\V1\BillingPortalApiController;
 use App\Http\Controllers\Api\V1\BillingSubscriptionController;
 use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\TattooContentController;
@@ -28,6 +30,12 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('/billing/subscription', [BillingSubscriptionController::class, 'show'])
             ->name('api.v1.billing.subscription.show');
+        Route::post('/billing/checkout/{plan}', BillingCheckoutController::class)
+            ->middleware('throttle:api-write')
+            ->name('api.v1.billing.checkout');
+        Route::post('/billing/portal', BillingPortalApiController::class)
+            ->middleware('throttle:api-write')
+            ->name('api.v1.billing.portal');
 
         Route::get('/tattoos', [TattooController::class, 'index'])
             ->name('api.v1.tattoos.index');
