@@ -234,8 +234,75 @@ Recent processed examples:
 - `evt_1TaIQ9HNn4kAnu3BVIiYw7Sj` -> `customer.subscription.updated`
 - `evt_1TaIQJHNn4kAnu3BoobcnTT6` -> `customer.subscription.deleted`
 
-Pending to fully close E2E:
+Completed after final checkout and API validation:
 
-1. Validate checkout completion using API generated checkout URL and Stripe test card.
-2. Verify `subscriptions`, `users.plan_id`, and `users.plan_expires_at` for the target test user after checkout/webhooks.
-3. Verify `/api/v1/billing/subscription` status transitions for that same user token.
+1. Checkout session generated from API and completed in Stripe hosted checkout using test card `4242 4242 4242 4242`.
+2. Local subscription persisted for `owner@example.com`:
+  - `subscriptions.stripe_id = sub_1TaIWGHNn4kAnu3BmrG2NDfR`
+  - `subscriptions.stripe_status = active`
+  - `subscriptions.stripe_price = price_1TaIT9HNn4kAnu3BsUDQDWf2`
+  - `subscriptions.ends_at = null` (final post-resume state)
+3. User linkage verified:
+  - `users.plan_id = 1`
+  - `users.stripe_id = cus_UZRMZtCHgiTNCO`
+4. API lifecycle transitions verified with same owner token:
+  - `POST /api/v1/billing/subscription/cancel` -> `status=grace_period`
+  - `POST /api/v1/billing/subscription/resume` -> `status=activa`
+  - Final `GET /api/v1/billing/subscription` -> `status=activa`
+5. Latest processed webhook evidence includes additional `customer.subscription.updated` events for the cancel/resume cycle (processed at `2026-05-23 16:45:20`).
+
+Operational note:
+
+- Immediately after `resume`, one read returned `grace_period` before webhook propagation completed. A subsequent read returned `activa` with DB aligned (`stripe_status=active`, `ends_at=null`). This is expected eventual consistency for async webhook synchronization.
+
+## 13) Preproduction Sign-Off Checklist
+
+Use this checklist before enabling or modifying billing flows in preproduction/staging.
+
+### Environment and configuration
+
+1. [ ] `APP_ENV` is set correctly for preproduction/staging.
+2. [ ] Stripe keys are not test placeholders and match the intended environment.
+3. [ ] `STRIPE_WEBHOOK_SECRET` matches the active webhook endpoint.
+4. [ ] `STRIPE_WEBHOOK_TOLERANCE=300` (or approved value) is configured.
+5. [ ] `php artisan config:clear` executed after any `.env` billing change.
+
+### Webhook and queue readiness
+
+1. [ ] Webhook endpoint is reachable from Stripe (`/stripe/webhook`).
+2. [ ] Queue worker is running and consuming `payments,notifications,default`.
+3. [ ] Invalid signature test returns `403`.
+4. [ ] Valid signature test is accepted and recorded.
+5. [ ] Duplicate webhook replay does not produce duplicate side-effects.
+
+### Functional billing validation
+
+1. [ ] Checkout URL is generated through `POST /api/v1/billing/checkout/{plan}`.
+2. [ ] Hosted Stripe checkout completes successfully.
+3. [ ] `GET /api/v1/billing/subscription` returns `activa` after completion.
+4. [ ] `POST /api/v1/billing/subscription/cancel` returns `grace_period`.
+5. [ ] `POST /api/v1/billing/subscription/resume` returns `activa` (or converges after webhook propagation).
+
+### Data integrity checkpoints
+
+1. [ ] `subscriptions` contains expected `stripe_id`, `stripe_status`, `stripe_price`.
+2. [ ] `subscriptions.ends_at` matches lifecycle state (`null` when active after resume).
+3. [ ] `users.plan_id` matches plan mapped by `stripe_price_id`.
+4. [ ] `users.stripe_id` is present for subscribed users.
+5. [ ] `stripe_webhook_events` shows processed lifecycle events with unique `stripe_event_id`.
+
+### Documentation and audit trail
+
+1. [ ] Execution date/time and operator are logged in section `12) Execution Progress Log`.
+2. [ ] Relevant event IDs are copied to the progress log.
+3. [ ] Any transient consistency delays are documented as operational notes.
+4. [ ] README runbook summary is updated if execution changes expected behavior.
+
+### Approval gate
+
+Mark sign-off as complete only when all items above are checked and validated.
+
+- Technical owner approval: [ ]
+- QA approval: [ ]
+- Product/operations approval: [ ]
+- Date: [ ]
