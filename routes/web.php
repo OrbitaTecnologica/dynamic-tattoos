@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function (): void {
 */
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'admin.dashboard')->name('dashboard');
+    Route::view('/billing-alerts', 'admin.billing-alerts')->name('billing-alerts');
     Route::view('/tattoos', 'admin.tattoos')->name('tattoos');
     Route::view('/scans', 'admin.scans')->name('scans');
     Route::view('/qr-generator', 'admin.qr-generator')->name('qr-generator');

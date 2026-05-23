@@ -93,6 +93,7 @@
                 @php
                     $navItems = [
                         ['route' => 'admin.dashboard',    'label' => 'Dashboard',     'icon' => 'chart'],
+                        ['route' => 'admin.billing-alerts','label' => 'Alertas Billing','icon' => 'alerts'],
                         ['route' => 'admin.tattoos',      'label' => 'Tatuajes',      'icon' => 'qr'],
                         ['route' => 'admin.scans',        'label' => 'Monitor Scans', 'icon' => 'scan'],
                         ['route' => 'admin.qr-generator', 'label' => 'Generar QRs',   'icon' => 'generator'],

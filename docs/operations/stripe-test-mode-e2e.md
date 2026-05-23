@@ -358,3 +358,7 @@ Main log event names:
 1. Alert when `billing.plan_sync.failed` or `billing.notification.failed` appears above baseline.
 2. Alert when `failed_jobs` grows continuously for `payments` or `notifications` queues.
 3. Track duplicate webhook ratio using `stripe.webhook.duplicate_ignored` to detect unexpected replay spikes.
+
+For incident handling flow, use:
+
+- `docs/operations/billing-incident-response.md`

@@ -191,6 +191,10 @@ E2E operations runbook:
 
 - `docs/operations/stripe-test-mode-e2e.md`
 
+Billing incident response runbook:
+
+- `docs/operations/billing-incident-response.md`
+
 ### Runbook Execution Log (2026-05-23)
 
 Latest Stripe test-mode E2E execution completed successfully in local environment (`http://127.0.0.1:8000`).
