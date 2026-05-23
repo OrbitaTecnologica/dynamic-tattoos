@@ -7,6 +7,7 @@ namespace App\Services\Billing;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse as IlluminateRedirectResponse;
+use Laravel\Cashier\Checkout;
 use RuntimeException;
 use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
@@ -43,6 +44,16 @@ final class CashierBillingGateway implements BillingGateway
     {
         if ($response instanceof IlluminateRedirectResponse || $response instanceof SymfonyRedirectResponse) {
             return $response->getTargetUrl();
+        }
+
+        if ($response instanceof Checkout) {
+            $session = $response->asStripeCheckoutSession();
+
+            if (isset($session->url) && is_string($session->url) && $session->url !== '') {
+                return $session->url;
+            }
+
+            return $response->redirect()->getTargetUrl();
         }
 
         if (is_object($response) && method_exists($response, 'url')) {

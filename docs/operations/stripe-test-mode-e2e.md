@@ -206,3 +206,36 @@ E2E is successful when all are true:
 3. `subscriptions` and `users.plan_id/plan_expires_at` reflect Stripe state.
 4. `stripe_webhook_events` records processed events and protects idempotency.
 5. API endpoint `/api/v1/billing/subscription` returns expected status transitions.
+
+---
+
+## 12) Execution Progress Log
+
+### 2026-05-23 (local)
+
+Completed checkpoints:
+
+1. Stripe CLI authenticated and running locally.
+2. Webhook signing secret configured in local environment.
+3. Trigger executed: `invoice.payment_failed`.
+4. Trigger executed: `customer.subscription.updated`.
+5. Trigger executed: `customer.subscription.deleted`.
+6. Persistence verified in `stripe_webhook_events` with recent records.
+
+Observed event persistence summary:
+
+- `invoice.payment_failed`: 1
+- `customer.subscription.updated`: 1
+- `customer.subscription.deleted`: 1
+
+Recent processed examples:
+
+- `evt_1TaIONHNn4kAnu3BJ6sqj90z` -> `invoice.payment_failed`
+- `evt_1TaIQ9HNn4kAnu3BVIiYw7Sj` -> `customer.subscription.updated`
+- `evt_1TaIQJHNn4kAnu3BoobcnTT6` -> `customer.subscription.deleted`
+
+Pending to fully close E2E:
+
+1. Validate checkout completion using API generated checkout URL and Stripe test card.
+2. Verify `subscriptions`, `users.plan_id`, and `users.plan_expires_at` for the target test user after checkout/webhooks.
+3. Verify `/api/v1/billing/subscription` status transitions for that same user token.

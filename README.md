@@ -191,6 +191,27 @@ E2E operations runbook:
 
 - `docs/operations/stripe-test-mode-e2e.md`
 
+### Runbook Execution Log (2026-05-23)
+
+Latest Stripe test-mode E2E execution completed successfully in local environment (`http://127.0.0.1:8000`).
+
+Scope executed:
+
+- Checkout completion with Stripe test card (`4242 4242 4242 4242`) and redirect back to app.
+- Webhook ingestion and idempotent processing for subscription lifecycle events.
+- API lifecycle transitions for subscription cancel and resume.
+
+Operational evidence captured:
+
+- `subscriptions` latest row for `owner@example.com`: `stripe_status=active`, `stripe_price=price_1TaIT9HNn4kAnu3BsUDQDWf2`, `ends_at=null`.
+- `/api/v1/billing/subscription` final state: `status=activa` with active Stripe subscription id.
+- `stripe_webhook_events` processed `customer.subscription.created` and `customer.subscription.updated` events for the checkout and resume cycle.
+
+Notes:
+
+- Immediately after resume, one read briefly returned `grace_period` before webhook propagation completed; subsequent check returned `activa` and DB state matched (`ends_at=null`).
+- This behavior is expected eventual consistency between direct API actions and asynchronous webhook synchronization.
+
 ---
 
 ## Content Types
