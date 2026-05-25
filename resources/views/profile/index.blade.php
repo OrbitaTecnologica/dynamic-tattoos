@@ -1005,6 +1005,10 @@
                    @click="if (!item.href) { $event.preventDefault(); tab = item.id; navOpen = false; }">
                     <span class="tab-icon" x-html="item.icon"></span>
                     <span x-text="item.label"></span>
+                    <span x-show="item.premium"
+                          style="margin-left:auto; font-size:.55rem; font-weight:800; letter-spacing:.08em; padding:.15rem .4rem; border-radius:9999px; background:linear-gradient(135deg,#b30000,#ff1a1a); color:#fff;">
+                        PREMIUM
+                    </span>
                     <svg x-show="item.href" style="width:12px;height:12px;opacity:.7;margin-left:auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
                 </a>
             </template>
@@ -1782,6 +1786,7 @@
                     nav_team: 'Equipo',
                     nav_activity: 'Actividad',
                     nav_danger: 'Acciones avanzadas',
+                    nav_links: 'Tarjeta de links',
                     nav_studio: 'Abrir QR Studio',
                 },
                 en: {
@@ -1807,6 +1812,7 @@
                     nav_team: 'Team',
                     nav_activity: 'Activity',
                     nav_danger: 'Danger zone',
+                    nav_links: 'Link card',
                     nav_studio: 'Open QR Studio',
                 },
                 pt: {
@@ -1832,6 +1838,7 @@
                     nav_team: 'Equipa',
                     nav_activity: 'Atividade',
                     nav_danger: 'Zona de perigo',
+                    nav_links: 'Cartão de links',
                     nav_studio: 'Abrir QR Studio',
                 },
                 fr: {
@@ -1857,6 +1864,7 @@
                     nav_team: 'Équipe',
                     nav_activity: 'Activité',
                     nav_danger: 'Zone dangereuse',
+                    nav_links: 'Carte de liens',
                     nav_studio: 'Ouvrir QR Studio',
                 },
                 de: {
@@ -1882,6 +1890,7 @@
                     nav_team: 'Team',
                     nav_activity: 'Aktivität',
                     nav_danger: 'Gefahrenzone',
+                    nav_links: 'Link-Karte',
                     nav_studio: 'QR Studio öffnen',
                 },
             },
@@ -1961,6 +1970,7 @@
                 { id: 'team',          icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2\"/><circle cx=\"9\" cy=\"7\" r=\"4\"/><path d=\"M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75\"/></svg>' },
                 { id: 'activity',      icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><polyline points=\"22 12 18 12 15 21 9 3 6 12 2 12\"/></svg>' },
                 { id: 'danger',        icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z\"/><line x1=\"12\" y1=\"9\" x2=\"12\" y2=\"13\"/><line x1=\"12\" y1=\"17\" x2=\"12.01\" y2=\"17\"/></svg>' },
+                { id: 'links',         href: '{{ route('link-page.editor') }}', premium: true, icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1\"/><path d=\"M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1\"/></svg>' },
                 { id: 'studio',        href: '{{ route('qr.create') }}', icon: '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\" rx=\"1\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1\"/><path d=\"M14 14h3v3h-3zM20 14h1v1h-1zM14 20h3v1h-3zM20 17h1v4M17 20h3\"/></svg>' },
             ],
             get nav() {

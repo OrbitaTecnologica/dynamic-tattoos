@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
@@ -26,6 +27,7 @@ final class User extends Authenticatable
         'role',
         'plan_id',
         'plan_expires_at',
+        'is_premium',
     ];
 
     protected $hidden = [
@@ -39,6 +41,7 @@ final class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'plan_expires_at'   => 'datetime',
             'password'          => 'hashed',
+            'is_premium'        => 'boolean',
         ];
     }
 
@@ -54,6 +57,11 @@ final class User extends Authenticatable
     public function tattoos(): HasMany
     {
         return $this->hasMany(Tattoo::class);
+    }
+
+    public function linkPage(): HasOne
+    {
+        return $this->hasOne(LinkPage::class);
     }
 
     // -------------------------------------------------------------------------
