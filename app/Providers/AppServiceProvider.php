@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Cashier\Events\WebhookHandled;
 
@@ -25,28 +24,10 @@ final class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->forceApplicationUrl();
         $this->configureLivewireRoutes();
         $this->configureRateLimiting();
 
         Event::listen(WebhookHandled::class, HandleCashierWebhook::class);
-    }
-
-    private function forceApplicationUrl(): void
-    {
-        $appUrl = rtrim((string) config('app.url'), '/');
-
-        if ($appUrl === '') {
-            return;
-        }
-
-        URL::forceRootUrl($appUrl);
-
-        $scheme = parse_url($appUrl, PHP_URL_SCHEME);
-
-        if (is_string($scheme) && $scheme !== '') {
-            URL::forceScheme($scheme);
-        }
     }
 
     private function configureLivewireRoutes(): void
