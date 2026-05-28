@@ -26,7 +26,7 @@
                 Evolucion Tatuaje Dinamico
             </a>
             <div class="flex items-center gap-3">
-                <a href="/up" class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200">
+                <a href="{{ url('/up') }}" class="rounded-full border border-white/20 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-200 transition hover:border-cyan-300 hover:text-cyan-200">
                     Estado
                 </a>
                 @auth
