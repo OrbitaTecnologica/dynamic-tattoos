@@ -30,12 +30,10 @@
                     Estado
                 </a>
                 @auth
-                    @if(auth()->user()->isAdmin())
-                        <a href="{{ route('admin.dashboard') }}"
-                           class="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-500/40">
-                            Admin Panel
-                        </a>
-                    @endif
+                    <a href="{{ auth()->user()->isAdmin() ? route('admin.dashboard') : route('dashboard') }}"
+                       class="rounded-full bg-gradient-to-r from-cyan-500 to-violet-500 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-white shadow-lg shadow-cyan-500/20 transition hover:shadow-cyan-500/40">
+                        {{ auth()->user()->isAdmin() ? 'Admin Panel' : 'Dashboard' }}
+                    </a>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit"
