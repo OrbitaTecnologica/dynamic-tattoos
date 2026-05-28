@@ -41,6 +41,6 @@ class LinkPage extends Model
 
     public function publicUrl(): string
     {
-        return url('/u/' . $this->slug);
+        return route('link-page.show', ['slug' => $this->slug]);
     }
 }
