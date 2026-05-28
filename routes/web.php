@@ -2,12 +2,15 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\BillingPortalController;
+use App\Http\Controllers\LinkPageController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\SubscriptionCheckoutController;
 use App\Http\Controllers\TattooRedirectController;
+use App\Livewire\LinkPageEditor;
+use App\Livewire\LinkPageOnboarding;
 use App\Models\Tattoo;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +46,16 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']
 
 /*
 |--------------------------------------------------------------------------
+| Vista pública link-page (Linktree) + tracking de clics
+|--------------------------------------------------------------------------
+*/
+Route::get('/u/{slug}', [LinkPageController::class, 'show'])->name('link-page.show');
+Route::get('/u/{slug}/c/{link}', [LinkPageController::class, 'redirect'])
+    ->whereNumber('link')
+    ->name('link-page.redirect');
+
+/*
+|--------------------------------------------------------------------------
 | Authenticated User Routes (Breeze profile + tattoo management)
 |--------------------------------------------------------------------------
 */
@@ -70,6 +83,12 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
 
     // Client profile panel
     Route::view('/perfil', 'profile.index')->name('profile.index');
+
+    // Tarjeta de links (estilo Linktree) — sólo usuarios premium.
+    Route::middleware([\App\Http\Middleware\EnsurePremium::class])->group(function (): void {
+        Route::get('/perfil/links/onboarding', LinkPageOnboarding::class)->name('link-page.onboarding');
+        Route::get('/perfil/links', LinkPageEditor::class)->name('link-page.editor');
+    });
 });
 
 Route::middleware('auth')->group(function (): void {
