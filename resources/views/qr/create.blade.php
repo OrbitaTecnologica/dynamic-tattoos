@@ -827,9 +827,9 @@
   function qrBuilder(config){
     return {
       baseUrl: config.baseUrl,
-      dotsTypes:         buildOptions(['dots','rounded','extra-rounded','square'], SHAPES.dots),
-      cornersSquareTypes:buildOptions(['dot','extra-rounded','square'],           SHAPES.cornersSquare),
-      cornersDotTypes:   buildOptions(['dot','square'],                            SHAPES.cornersDot),
+      dotsTypes:         buildOptions(['rounded','extra-rounded'], SHAPES.dots),
+      cornersSquareTypes:buildOptions(['dot','extra-rounded'],     SHAPES.cornersSquare),
+      cornersDotTypes:   buildOptions(['dot'],                     SHAPES.cornersDot),
       form: {
         slug: config.initialSlug || '',
         url:  config.initialSlug ? `${config.baseUrl}/${config.initialSlug}` : '',
@@ -850,7 +850,7 @@
           if (!window.QRCodeStyling) { setTimeout(start, 50); return; }
           this.qr = new window.QRCodeStyling({
             width:600, height:600, type:'svg', data:'https://example.com',
-            margin:0, qrOptions:{ errorCorrectionLevel:'Q' },
+            margin:0, qrOptions:{ errorCorrectionLevel:'L' },
             dotsOptions:{ color:this.form.color, type:this.form.dots_type },
             cornersSquareOptions:{ color:this.form.color, type:this.form.corners_square_type },
             cornersDotOptions:{ color:this.form.color, type:this.form.corners_dot_type },
