@@ -61,25 +61,19 @@ Route::get('/u/{slug}/c/{link}', [LinkPageController::class, 'redirect'])
 */
 Route::middleware(['auth', 'verified'])->group(function (): void {
 
-    Route::get('/dashboard', function () {
-        return view('dashboard', [
-            'tattoos' => auth()->user()->tattoos()->with('activeContent')->get(),
-        ]);
-    })->name('dashboard');
-
     Route::view('/billing', 'dashboard.billing')->name('billing');
     Route::post('/billing/checkout/{plan}', SubscriptionCheckoutController::class)->name('billing.checkout');
     Route::post('/billing/portal', BillingPortalController::class)->name('billing.portal');
 
-    Route::get('/dashboard/tattoos/{tattoo}/manage', function (Tattoo $tattoo) {
+    Route::get('/perfil/tattoos/{tattoo}/manage', function (Tattoo $tattoo) {
         return view('dashboard.manage-tattoo', compact('tattoo'));
     })->name('tattoos.manage');
 
     // QR Studio
-    Route::get('/dashboard/qr-studio', [QrCodeController::class, 'create'])->name('qr.create');
-    Route::post('/dashboard/qr-studio', [QrCodeController::class, 'store'])->name('qr.store');
-    Route::get('/dashboard/qr-studio/history', [QrCodeController::class, 'history'])->name('qr.history');
-    Route::post('/dashboard/qr-studio/email', [QrCodeController::class, 'sendEmail'])->name('qr.email');
+    Route::get('/perfil/qr-studio', [QrCodeController::class, 'create'])->name('qr.create');
+    Route::post('/perfil/qr-studio', [QrCodeController::class, 'store'])->name('qr.store');
+    Route::get('/perfil/qr-studio/history', [QrCodeController::class, 'history'])->name('qr.history');
+    Route::post('/perfil/qr-studio/email', [QrCodeController::class, 'sendEmail'])->name('qr.email');
 
     // Client profile panel
     Route::view('/perfil', 'profile.index')->name('profile.index');
@@ -102,6 +96,14 @@ Route::middleware('auth')->group(function (): void {
 | Admin Routes
 |--------------------------------------------------------------------------
 */
+Route::middleware(['auth', 'verified', 'admin'])->group(function (): void {
+    Route::get('/dashboard', function () {
+        return view('dashboard', [
+            'tattoos' => auth()->user()->tattoos()->with('activeContent')->get(),
+        ]);
+    })->name('dashboard');
+});
+
 Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'admin.dashboard')->name('dashboard');
     Route::view('/tattoos', 'admin.tattoos')->name('tattoos');
