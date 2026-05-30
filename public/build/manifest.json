@@ -2,6 +2,9 @@
   "_qr-code-styling-9kIlYS7C.js": {
     "file": "assets/qr-code-styling-9kIlYS7C.js",
     "name": "qr-code-styling"
+  "_qr-code-styling-9kIlYS7C.js": {
+    "file": "assets/qr-code-styling-9kIlYS7C.js",
+    "name": "qr-code-styling"
   },
   "resources/css/app.css": {
     "file": "assets/app-B7PX64lc.css",
@@ -14,8 +17,22 @@
   },
   "resources/js/app.js": {
     "file": "assets/app-B2cStEZl.js",
+    "file": "assets/app-B2cStEZl.js",
     "name": "app",
     "src": "resources/js/app.js",
+    "isEntry": true,
+    "imports": [
+      "_qr-code-styling-9kIlYS7C.js"
+    ]
+  },
+  "resources/js/link-page.js": {
+    "file": "assets/link-page-ByKv44jx.js",
+    "name": "link-page",
+    "src": "resources/js/link-page.js",
+    "isEntry": true,
+    "imports": [
+      "_qr-code-styling-9kIlYS7C.js"
+    ]
     "isEntry": true,
     "imports": [
       "_qr-code-styling-9kIlYS7C.js"
