@@ -137,7 +137,7 @@
                 <div class="input flex items-stretch w-full rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-rose-500/40">
                     <span class="flex items-center gap-2.5 px-5 py-3 bg-white/[0.04] border-r border-white/[0.06] text-slate-400 text-sm select-none">
                         <svg class="w-4 h-4 opacity-60 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                        <span class="font-mono text-[13px] tracking-tight whitespace-nowrap">{{ str_replace(['https://','http://'], '', $baseUrl) }}/</span>
+                        <span class="font-mono text-[13px] tracking-tight whitespace-nowrap uppercase">d-t.me</span>
                     </span>
                     <input
                         id="slug"
@@ -156,7 +156,7 @@
                 </div>
 
                 <p class="mt-2 text-[11px] text-slate-500">
-                    URL final: <span class="font-mono text-slate-300" x-text="form.url || '{{ $baseUrl }}/…'"></span>
+                    URL final: <span class="font-mono text-slate-300" x-text="form.url || 'd-t.me/…'"></span>
                 </p>
                 <p x-show="errors.slug || errors.url" x-text="errors.slug || errors.url" class="text-sm text-rose-400 mt-2"></p>
 
@@ -478,7 +478,7 @@
 
     function qrBuilder(config) {
         return {
-            baseUrl: config.baseUrl,
+            baseUrl: 'HTTPS://D-T.ME',
             dotsTypes: buildOptions(@json($dotsTypes), SHAPES.dots),
             cornersSquareTypes: buildOptions(@json($cornersSquareTypes), SHAPES.cornersSquare),
             cornersDotTypes: buildOptions(@json($cornersDotTypes), SHAPES.cornersDot),
@@ -486,9 +486,9 @@
                 slug: config.initialSlug || '',
                 url: config.initialSlug ? `${config.baseUrl}/${config.initialSlug}` : '',
                 color: '#000000',
-                dots_type: 'rounded',
-                corners_square_type: 'extra-rounded',
-                corners_dot_type: 'dot',
+                dots_type: 'square',
+                corners_square_type: 'square',
+                corners_dot_type: 'square',
             },
             errors: {},
             saving: false,
@@ -508,9 +508,9 @@
                     width: 600,
                     height: 600,
                     type: 'svg',
-                    data: 'https://example.com',
-                    margin: 0,
-                    qrOptions: { errorCorrectionLevel: 'Q' },
+                    data: '',
+                    margin: 2,
+                    qrOptions: { errorCorrectionLevel: 'M' },
                     dotsOptions: { color: this.form.color, type: this.form.dots_type },
                     cornersSquareOptions: { color: this.form.color, type: this.form.corners_square_type },
                     cornersDotOptions: { color: this.form.color, type: this.form.corners_dot_type },
