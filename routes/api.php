@@ -34,7 +34,7 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:api-auth')
         ->name('api.v1.auth.login');
 
-    Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
+    Route::middleware(['auth:sanctum', 'throttle:api', \App\Http\Middleware\TrackTeamMemberActivity::class])->group(function (): void {
         Route::get('/auth/me', [AuthTokenController::class, 'me'])
             ->name('api.v1.auth.me');
 
@@ -155,6 +155,9 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/me/team/{member}', [TeamController::class, 'destroy'])
             ->middleware('throttle:api-write')
             ->name('api.v1.me.team.destroy');
+        Route::post('/team/invitations/{token}/accept', [TeamController::class, 'accept'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.team.invitations.accept');
 
         // Cuenta: almacenamiento
         Route::get('/me/storage', [StorageController::class, 'show'])

@@ -11,7 +11,9 @@ namespace App\Services;
 final class TotpService
 {
     private const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+
     private const PERIOD = 30;
+
     private const DIGITS = 6;
 
     public function generateSecret(int $bytes = 20): string

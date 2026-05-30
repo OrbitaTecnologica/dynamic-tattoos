@@ -6,6 +6,7 @@ namespace App\Listeners;
 
 use App\Jobs\SendSubscriptionNotificationJob;
 use App\Jobs\SyncUserPlanJob;
+use App\Models\StoragePack;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -58,6 +59,7 @@ final class HandleCashierWebhook
             'customer.subscription.updated' => $this->handleUpdated($userId),
             'customer.subscription.deleted' => $this->handleDeleted($userId),
             'invoice.payment_failed' => $this->handlePaymentFailed($userId),
+            'checkout.session.completed' => $this->handleCheckoutCompleted($userId, $event->payload),
             default => null,
         };
 
@@ -107,7 +109,38 @@ final class HandleCashierWebhook
     }
 
     /**
-     * @param array<string, mixed> $payload
+     * Credit a purchased storage pack (one-time checkout) to the user's quota.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function handleCheckoutCompleted(int $userId, array $payload): void
+    {
+        $packId = $payload['data']['object']['metadata']['storage_pack_id'] ?? null;
+
+        if ($packId === null) {
+            return;
+        }
+
+        $pack = StoragePack::query()->find($packId);
+        $user = User::query()->find($userId);
+
+        if ($pack === null || $user === null) {
+            return;
+        }
+
+        $user->forceFill([
+            'extra_storage_mb' => (int) $user->extra_storage_mb + $pack->size_mb,
+        ])->save();
+
+        activity('billing')
+            ->causedBy($user)
+            ->event('storage_pack_purchased')
+            ->withProperties(['detail' => $pack->label.' · +'.$pack->size_mb.' MB'])
+            ->log('Ampliación de almacenamiento');
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
      */
     private function markAsProcessed(string $eventId, string $type, array $payload): bool
     {

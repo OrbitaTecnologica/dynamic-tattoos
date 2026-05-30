@@ -16,9 +16,7 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode as QrCodeGenerator;
 
 final class TwoFactorController extends Controller
 {
-    public function __construct(private readonly TotpService $totp)
-    {
-    }
+    public function __construct(private readonly TotpService $totp) {}
 
     public function enable(Request $request): JsonResponse
     {
@@ -65,6 +63,12 @@ final class TwoFactorController extends Controller
 
         $user->forceFill(['two_factor_confirmed_at' => now()])->save();
 
+        activity('security')
+            ->causedBy($user)
+            ->event('2fa_enabled')
+            ->withProperties(['detail' => 'Autenticación en dos pasos activada'])
+            ->log('Seguridad actualizada');
+
         return response()->json([
             'message' => 'Autenticación en dos pasos activada.',
         ]);
@@ -90,6 +94,12 @@ final class TwoFactorController extends Controller
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ])->save();
+
+        activity('security')
+            ->causedBy($user)
+            ->event('2fa_disabled')
+            ->withProperties(['detail' => 'Autenticación en dos pasos desactivada'])
+            ->log('Seguridad actualizada');
 
         return response()->json([
             'message' => 'Autenticación en dos pasos desactivada.',

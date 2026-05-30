@@ -20,8 +20,8 @@ final class UpdateNotificationsRequest extends FormRequest
     {
         return [
             'notifications' => ['required', 'array'],
-            'notifications.*.email' => ['required', 'boolean'],
-            'notifications.*.push' => ['required', 'boolean'],
+            'notifications.*.email' => ['sometimes', 'boolean'],
+            'notifications.*.push' => ['sometimes', 'boolean'],
         ];
     }
 }

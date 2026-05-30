@@ -32,6 +32,12 @@ final class SecurityController extends Controller
 
         $user->forceFill(['password' => Hash::make($validated['password'])])->save();
 
+        activity('security')
+            ->causedBy($user)
+            ->event('password_changed')
+            ->withProperties(['detail' => 'Cambio realizado desde ajustes'])
+            ->log('Contraseña modificada');
+
         return response()->json([
             'message' => 'Contraseña actualizada correctamente.',
         ]);

@@ -9,9 +9,9 @@ use App\Http\Requests\Api\V1\UpdateLinkPageRequest;
 use App\Http\Resources\Api\V1\LinkPageResource;
 use App\Models\LinkPage;
 use App\Models\User;
+use App\Services\UploadManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 final class LinkPageController extends Controller
 {
@@ -36,25 +36,26 @@ final class LinkPageController extends Controller
         ]);
     }
 
-    public function uploadAvatar(Request $request): JsonResponse
+    public function uploadAvatar(Request $request, UploadManager $uploads): JsonResponse
     {
-        return $this->storeImage($request, 'avatar_path', 'avatar');
+        return $this->storeImage($request, $uploads, 'avatar_path', 'avatar', 'link_avatar');
     }
 
-    public function uploadCover(Request $request): JsonResponse
+    public function uploadCover(Request $request, UploadManager $uploads): JsonResponse
     {
-        return $this->storeImage($request, 'cover_path', 'cover');
+        return $this->storeImage($request, $uploads, 'cover_path', 'cover', 'link_cover');
     }
 
-    private function storeImage(Request $request, string $column, string $field): JsonResponse
+    private function storeImage(Request $request, UploadManager $uploads, string $column, string $field, string $type): JsonResponse
     {
         $request->validate([
             $field => ['required', 'image', 'max:5120'],
         ]);
 
-        $page = $this->resolvePage($request->user());
-        $path = $request->file($field)->store('link-pages', 'public');
-        $page->update([$column => $path]);
+        $user = $request->user();
+        $page = $this->resolvePage($user);
+        $upload = $uploads->store($user, $request->file($field), $type, 'link-pages');
+        $page->update([$column => $upload->path]);
         $page->load('links');
 
         return response()->json([

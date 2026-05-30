@@ -31,7 +31,6 @@ final class User extends Authenticatable
         'language',
         'timezone',
         'currency',
-        'extra_storage_mb',
         'notification_preferences',
         'email',
         'password',

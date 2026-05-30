@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\UpdateProfileRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\UploadManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -33,12 +34,18 @@ final class ProfileController extends Controller
 
         $user->save();
 
+        activity('account')
+            ->causedBy($user)
+            ->event('profile_updated')
+            ->withProperties(['detail' => 'Datos de perfil actualizados'])
+            ->log('Perfil actualizado');
+
         return response()->json([
             'data' => new UserResource($user),
         ]);
     }
 
-    public function uploadAvatar(Request $request): JsonResponse
+    public function uploadAvatar(Request $request, UploadManager $uploads): JsonResponse
     {
         $request->validate([
             'avatar' => ['required', 'image', 'max:5120'],
@@ -46,8 +53,8 @@ final class ProfileController extends Controller
 
         /** @var User $user */
         $user = $request->user();
-        $path = $request->file('avatar')->store('avatars', 'public');
-        $user->update(['avatar_path' => $path]);
+        $upload = $uploads->store($user, $request->file('avatar'), 'avatar', 'avatars');
+        $user->update(['avatar_path' => $upload->path]);
 
         return response()->json([
             'data' => new UserResource($user),

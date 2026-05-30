@@ -8,11 +8,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\InviteTeamMemberRequest;
 use App\Http\Requests\Api\V1\UpdateTeamMemberRequest;
 use App\Http\Resources\Api\V1\TeamMemberResource;
+use App\Mail\TeamInvitationMail;
 use App\Models\TeamMember;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 final class TeamController extends Controller
@@ -48,11 +50,39 @@ final class TeamController extends Controller
             'invited_at' => now(),
         ]);
 
-        // TODO: enviar email de invitación con el token (Mailable) cuando esté lista la plantilla.
+        Mail::to($member->email)->send(new TeamInvitationMail($member));
+
+        activity('account')
+            ->causedBy($user)
+            ->event('team_invited')
+            ->withProperties(['detail' => $member->email.' · '.$member->role])
+            ->log('Invitación de equipo enviada');
 
         return response()->json([
             'data' => new TeamMemberResource($member),
         ], 201);
+    }
+
+    public function accept(Request $request, string $token): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        $member = TeamMember::query()
+            ->where('invitation_token', $token)
+            ->where('status', 'pending')
+            ->firstOrFail();
+
+        $member->forceFill([
+            'member_user_id' => $user->id,
+            'status' => 'active',
+            'invitation_token' => null,
+            'last_active_at' => now(),
+        ])->save();
+
+        return response()->json([
+            'data' => new TeamMemberResource($member),
+        ]);
     }
 
     public function update(UpdateTeamMemberRequest $request, TeamMember $member): JsonResponse
