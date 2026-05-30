@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\TotpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -18,7 +19,7 @@ final class AuthTokenController extends Controller
     /**
      * @throws ValidationException
      */
-    public function store(LoginRequest $request): JsonResponse
+    public function store(LoginRequest $request, TotpService $totp): JsonResponse
     {
         $email = mb_strtolower((string) $request->input('email'));
 
@@ -32,8 +33,23 @@ final class AuthTokenController extends Controller
             ]);
         }
 
+        if ($user->hasTwoFactorEnabled()) {
+            $this->assertTwoFactor($user, $totp, (string) $request->input('two_factor_code', ''));
+        }
+
         $tokenName = (string) $request->input('device_name', 'api-token');
-        $plainTextToken = $user->createToken($tokenName)->plainTextToken;
+        $newToken = $user->createToken($tokenName);
+        $newToken->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 512),
+        ])->save();
+        $plainTextToken = $newToken->plainTextToken;
+
+        activity('security')
+            ->causedBy($user)
+            ->event('login')
+            ->withProperties(['detail' => trim($tokenName.' · '.(string) $request->ip())])
+            ->log('Inicio de sesión');
 
         return response()->json([
             'data' => [
@@ -42,6 +58,45 @@ final class AuthTokenController extends Controller
                 'user' => new UserResource($user),
             ],
         ], 201);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    private function assertTwoFactor(User $user, TotpService $totp, string $code): void
+    {
+        if ($code === '') {
+            throw ValidationException::withMessages([
+                'two_factor_code' => 'Se requiere el código de autenticación en dos pasos.',
+            ]);
+        }
+
+        if ($totp->verify((string) $user->two_factor_secret, $code)) {
+            return;
+        }
+
+        if ($this->consumeRecoveryCode($user, $code)) {
+            return;
+        }
+
+        throw ValidationException::withMessages([
+            'two_factor_code' => 'El código de dos pasos no es válido.',
+        ]);
+    }
+
+    private function consumeRecoveryCode(User $user, string $code): bool
+    {
+        $codes = $user->two_factor_recovery_codes ?? [];
+
+        if (! in_array($code, $codes, true)) {
+            return false;
+        }
+
+        $user->forceFill([
+            'two_factor_recovery_codes' => array_values(array_filter($codes, static fn ($c): bool => $c !== $code)),
+        ])->save();
+
+        return true;
     }
 
     public function me(Request $request): JsonResponse

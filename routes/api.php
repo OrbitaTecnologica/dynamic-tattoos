@@ -3,10 +3,27 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthTokenController;
+use App\Http\Controllers\Api\V1\Me\AccountController;
+use App\Http\Controllers\Api\V1\Me\ActivityController;
+use App\Http\Controllers\Api\V1\Me\BillingController as MeBillingController;
+use App\Http\Controllers\Api\V1\Me\CompanyController;
+use App\Http\Controllers\Api\V1\Me\NotificationController;
+use App\Http\Controllers\Api\V1\Me\PreferenceController;
+use App\Http\Controllers\Api\V1\Me\ProfileController;
+use App\Http\Controllers\Api\V1\Me\SecurityController;
+use App\Http\Controllers\Api\V1\Me\SessionController;
+use App\Http\Controllers\Api\V1\Me\StatsController;
+use App\Http\Controllers\Api\V1\Me\StorageController;
+use App\Http\Controllers\Api\V1\Me\TeamController;
+use App\Http\Controllers\Api\V1\Me\TwoFactorController;
+use App\Http\Controllers\Api\V1\StoragePackController;
 use App\Http\Controllers\Api\V1\BillingCheckoutController;
 use App\Http\Controllers\Api\V1\BillingPortalApiController;
 use App\Http\Controllers\Api\V1\BillingSubscriptionController;
+use App\Http\Controllers\Api\V1\LinkPageController;
+use App\Http\Controllers\Api\V1\LinkPageLinkController;
 use App\Http\Controllers\Api\V1\PlanController;
+use App\Http\Controllers\Api\V1\QrCodeController;
 use App\Http\Controllers\Api\V1\TattooContentController;
 use App\Http\Controllers\Api\V1\TattooController;
 use App\Http\Controllers\Api\V1\TattooScanController;
@@ -65,6 +82,132 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('/tattoos/{tattoo}/scans', [TattooScanController::class, 'index'])
             ->name('api.v1.tattoos.scans.index');
+
+        // Cuenta: perfil, empresa, preferencias, notificaciones
+        Route::get('/me/profile', [ProfileController::class, 'show'])
+            ->name('api.v1.me.profile.show');
+        Route::patch('/me/profile', [ProfileController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.profile.update');
+        Route::post('/me/avatar', [ProfileController::class, 'uploadAvatar'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.avatar');
+        Route::get('/me/company', [CompanyController::class, 'show'])
+            ->name('api.v1.me.company.show');
+        Route::patch('/me/company', [CompanyController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.company.update');
+        Route::patch('/me/preferences', [PreferenceController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.preferences');
+        Route::get('/me/notifications', [NotificationController::class, 'show'])
+            ->name('api.v1.me.notifications.show');
+        Route::patch('/me/notifications', [NotificationController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.notifications.update');
+
+        // Cuenta: facturación, sesiones, seguridad
+        Route::get('/me/billing', [MeBillingController::class, 'overview'])
+            ->name('api.v1.me.billing');
+        Route::get('/me/invoices', [MeBillingController::class, 'invoices'])
+            ->name('api.v1.me.invoices');
+        Route::get('/me/sessions', [SessionController::class, 'index'])
+            ->name('api.v1.me.sessions.index');
+        Route::delete('/me/sessions/{id}', [SessionController::class, 'destroy'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.sessions.destroy');
+        Route::delete('/me/sessions', [SessionController::class, 'destroyOthers'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.sessions.destroy-others');
+        Route::patch('/me/password', [SecurityController::class, 'updatePassword'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.password');
+        Route::delete('/me', [AccountController::class, 'destroy'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.destroy');
+
+        // Cuenta: stats, actividad
+        Route::get('/me/stats', [StatsController::class, 'index'])
+            ->name('api.v1.me.stats');
+        Route::get('/me/activity', [ActivityController::class, 'index'])
+            ->name('api.v1.me.activity');
+
+        // Cuenta: 2FA
+        Route::post('/me/2fa/enable', [TwoFactorController::class, 'enable'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.2fa.enable');
+        Route::post('/me/2fa/confirm', [TwoFactorController::class, 'confirm'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.2fa.confirm');
+        Route::delete('/me/2fa', [TwoFactorController::class, 'disable'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.2fa.disable');
+
+        // Cuenta: equipo
+        Route::get('/me/team', [TeamController::class, 'index'])
+            ->name('api.v1.me.team.index');
+        Route::post('/me/team', [TeamController::class, 'store'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.team.store');
+        Route::patch('/me/team/{member}', [TeamController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.team.update');
+        Route::delete('/me/team/{member}', [TeamController::class, 'destroy'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.team.destroy');
+
+        // Cuenta: almacenamiento
+        Route::get('/me/storage', [StorageController::class, 'show'])
+            ->name('api.v1.me.storage.show');
+        Route::post('/me/storage/packs/{pack}/checkout', [StorageController::class, 'checkout'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.storage.checkout');
+        Route::get('/storage-packs', [StoragePackController::class, 'index'])
+            ->name('api.v1.storage-packs.index');
+
+        // QR Studio
+        Route::get('/qr-codes', [QrCodeController::class, 'index'])
+            ->name('api.v1.qr-codes.index');
+        Route::get('/qr-codes/slug-available', [QrCodeController::class, 'slugAvailable'])
+            ->name('api.v1.qr-codes.slug-available');
+        Route::post('/qr-codes', [QrCodeController::class, 'store'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.qr-codes.store');
+        Route::get('/qr-codes/{qrCode}', [QrCodeController::class, 'show'])
+            ->name('api.v1.qr-codes.show');
+        Route::delete('/qr-codes/{qrCode}', [QrCodeController::class, 'destroy'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.qr-codes.destroy');
+        Route::post('/qr-codes/{qrCode}/email', [QrCodeController::class, 'email'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.qr-codes.email');
+
+        // Tarjeta de links (Link page)
+        Route::get('/link-page', [LinkPageController::class, 'show'])
+            ->name('api.v1.link-page.show');
+        Route::patch('/link-page', [LinkPageController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.update');
+        Route::post('/link-page/avatar', [LinkPageController::class, 'uploadAvatar'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.avatar');
+        Route::post('/link-page/cover', [LinkPageController::class, 'uploadCover'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.cover');
+        Route::get('/link-page/links', [LinkPageLinkController::class, 'index'])
+            ->name('api.v1.link-page.links.index');
+        Route::post('/link-page/links', [LinkPageLinkController::class, 'store'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.links.store');
+        Route::post('/link-page/links/reorder', [LinkPageLinkController::class, 'reorder'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.links.reorder');
+        Route::patch('/link-page/links/{link}', [LinkPageLinkController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.links.update');
+        Route::delete('/link-page/links/{link}', [LinkPageLinkController::class, 'destroy'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.links.destroy');
 
         Route::get('/admin/plans', [PlanController::class, 'adminIndex'])
             ->name('api.v1.admin.plans.index');
