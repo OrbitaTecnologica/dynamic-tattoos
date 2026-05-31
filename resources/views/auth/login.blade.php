@@ -92,13 +92,6 @@
                 </button>
             </form>
         </div>
-
-        <p class="mt-6 text-center text-xs text-gray-600">
-            ¿No tienes cuenta?
-            @if (Route::has('register'))
-                <a href="{{ route('register') }}" class="text-cyan-400 hover:text-cyan-300 transition">Regístrate</a>
-            @endif
-        </p>
     </div>
 </body>
 </html>

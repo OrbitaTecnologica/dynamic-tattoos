@@ -20,10 +20,10 @@ final class SubscriptionCancelledNotification extends Notification implements Sh
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Tu suscripcion fue cancelada')
             ->greeting('La suscripcion se marco como cancelada')
             ->line('Podras reactivarla en cualquier momento desde el panel de facturacion.')
-            ->action('Ver Facturacion', route('billing'));
+            ->action('Ver Facturacion', rtrim((string) config('app.frontend_url'), '/').'/mi-cuenta');
     }
 }

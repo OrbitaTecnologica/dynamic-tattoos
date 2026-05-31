@@ -2,24 +2,17 @@
 
 declare(strict_types=1);
 
-use App\Http\Controllers\BillingPortalController;
 use App\Http\Controllers\LinkPageController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\QrCodeController;
 use App\Http\Controllers\StripeWebhookController;
-use App\Http\Controllers\SubscriptionCheckoutController;
 use App\Http\Controllers\TattooRedirectController;
-use App\Livewire\LinkPageEditor;
-use App\Livewire\LinkPageOnboarding;
-use App\Models\Tattoo;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Landing
+| Raíz → panel administrativo (el frontend del cliente vive en el SPA)
 |--------------------------------------------------------------------------
 */
-Route::view('/', 'welcome')->name('home');
+Route::redirect('/', '/admin')->name('home');
 
 Route::view('/docs/api', 'docs.api')->name('docs.api');
 Route::get('/docs/api/openapi.yaml', static function () {
@@ -34,7 +27,7 @@ Route::get('/docs/api/openapi.yaml', static function () {
 
 /*
 |--------------------------------------------------------------------------
-| Public QR Redirect Route
+| Público: redirección/landing del QR escaneado (registra el scan)
 |--------------------------------------------------------------------------
 */
 Route::get('/t/{shortCode}', TattooRedirectController::class)
@@ -46,7 +39,7 @@ Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']
 
 /*
 |--------------------------------------------------------------------------
-| Vista pública link-page (Linktree) + tracking de clics
+| Público: tarjeta de links (Linktree) + tracking de clics
 |--------------------------------------------------------------------------
 */
 Route::get('/u/{slug}', [LinkPageController::class, 'show'])->name('link-page.show');
@@ -56,55 +49,10 @@ Route::get('/u/{slug}/c/{link}', [LinkPageController::class, 'redirect'])
 
 /*
 |--------------------------------------------------------------------------
-| Authenticated User Routes (Breeze profile + tattoo management)
+| Panel administrativo (sesión + rol admin)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'verified'])->group(function (): void {
-
-    Route::view('/billing', 'dashboard.billing')->name('billing');
-    Route::post('/billing/checkout/{plan}', SubscriptionCheckoutController::class)->name('billing.checkout');
-    Route::post('/billing/portal', BillingPortalController::class)->name('billing.portal');
-
-    Route::get('/perfil/tattoos/{tattoo}/manage', function (Tattoo $tattoo) {
-        return view('dashboard.manage-tattoo', compact('tattoo'));
-    })->name('tattoos.manage');
-
-    // QR Studio
-    Route::get('/perfil/qr-studio', [QrCodeController::class, 'create'])->name('qr.create');
-    Route::post('/perfil/qr-studio', [QrCodeController::class, 'store'])->name('qr.store');
-    Route::get('/perfil/qr-studio/history', [QrCodeController::class, 'history'])->name('qr.history');
-    Route::post('/perfil/qr-studio/email', [QrCodeController::class, 'sendEmail'])->name('qr.email');
-
-    // Client profile panel
-    Route::view('/perfil', 'profile.index')->name('profile.index');
-
-    // Tarjeta de links (estilo Linktree) — sólo usuarios premium.
-    Route::middleware([\App\Http\Middleware\EnsurePremium::class])->group(function (): void {
-        Route::get('/perfil/links/onboarding', LinkPageOnboarding::class)->name('link-page.onboarding');
-        Route::get('/perfil/links', LinkPageEditor::class)->name('link-page.editor');
-    });
-});
-
-Route::middleware('auth')->group(function (): void {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
-
-/*
-|--------------------------------------------------------------------------
-| Admin Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['auth', 'verified', 'admin'])->group(function (): void {
-    Route::get('/dashboard', function () {
-        return view('dashboard', [
-            'tattoos' => auth()->user()->tattoos()->with('activeContent')->get(),
-        ]);
-    })->name('dashboard');
-});
-
-Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'admin.dashboard')->name('dashboard');
     Route::view('/billing-alerts', 'admin.billing-alerts')->name('billing-alerts');
     Route::view('/tattoos', 'admin.tattoos')->name('tattoos');

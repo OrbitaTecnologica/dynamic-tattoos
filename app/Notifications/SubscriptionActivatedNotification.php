@@ -20,10 +20,10 @@ final class SubscriptionActivatedNotification extends Notification implements Sh
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Tu suscripcion esta activa')
             ->greeting('Tu plan se activo correctamente')
             ->line('Ya puedes administrar tu suscripcion y metodo de pago desde tu panel.')
-            ->action('Ir a Facturacion', route('billing'));
+            ->action('Ir a Facturacion', rtrim((string) config('app.frontend_url'), '/').'/mi-cuenta');
     }
 }

@@ -20,10 +20,10 @@ final class PaymentFailedNotification extends Notification implements ShouldQueu
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('No pudimos procesar tu pago')
             ->greeting('Detectamos un problema con tu ultimo cobro')
             ->line('Actualiza tu metodo de pago para evitar interrupciones en tu suscripcion.')
-            ->action('Actualizar Facturacion', route('billing'));
+            ->action('Actualizar Facturacion', rtrim((string) config('app.frontend_url'), '/').'/mi-cuenta');
     }
 }
