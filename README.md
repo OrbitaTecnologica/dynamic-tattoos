@@ -1,6 +1,26 @@
-# Dynamic Tattoos
+# Dynamic Tattoos — Backend (API + Admin Panel)
 
-A SaaS platform that links a permanent QR code tattooed on a person's skin to a user-controlled multimedia page. Because the QR code itself never changes, the destination content (links, image galleries, videos) can be updated at any time through a dashboard, allowing the owner to reflect their personal evolution without a new tattoo.
+**Dynamic Tattoos** is a SaaS where a permanent QR tattooed on the skin links to content the owner can change at any time (a link, image gallery, video, or link page). The QR never changes; the destination does — so the tattoo "evolves" without a new tattoo.
+
+## What this repository is
+
+This repo is the **backend**. After the legacy client-web layer was removed, it has exactly **two faces** (plus essential public routes):
+
+1. **REST API (`/api/v1/*`)** — consumed by the customer-facing SPA, which lives in a **separate repo: `dynamic-tattoos-frontend`**. Auth via **Laravel Sanctum** (Bearer tokens). Response envelope: `{ "data": … }` on success, `{ "error": { code, message, status, errors } }` on failure (validation under `error.errors.*`).
+2. **Admin panel (`/admin/*`)** — internal tool for administrators (`role = admin`), built with **Livewire 3** + session auth (Breeze). Manages **every** entity: users, plans, subscriptions, referrals, tattoos & content, link pages, companies, teams, storage/uploads, activity log and API tokens.
+
+Essential **public web** routes: the QR scan landing (`/t/{shortCode}`, records the scan), public link pages (`/u/{slug}`), the Stripe webhook, and the API docs.
+
+> ⚠️ The customer-facing website (landing, login/registration, "Mi Cuenta", QR Studio) is **NOT** in this repo — it's the `dynamic-tattoos-frontend` SPA, which talks to this API. There is **no client dashboard** here anymore.
+
+## Features
+
+- **Plans & subscriptions** — annual plans via **Stripe Checkout + Billing Portal** (Cashier), renewal reminders, optional **Stripe Tax** (IVA). Plans are fully configurable from the admin: price, storage, "featured", "referral/Partner", and a **per-plan referral reward**.
+- **Referrals / Partner program** — a referral QR for shops, a monitoring panel, and a reward (per-plan € or global fallback) credited to the Partner's Stripe balance when a referred user pays.
+- **Account** — profile, company (fiscal/NIF-IVA), preferences, notifications, real **TOTP 2FA**, sessions (Sanctum tokens), storage usage + packs, **team members**, **link pages** (Linktree-style), and an **activity log** (spatie).
+- **Admin panel** — full CRUD / monitoring across all of the above.
+
+> Project knowledge skills live in the **frontend** repo under `.claude/skills/`: `dynamic-tattoos-backend`, `dynamic-tattoos-data-model`, `dynamic-tattoos-business`, `dynamic-tattoos-frontend`.
 
 ---
 
@@ -8,10 +28,14 @@ A SaaS platform that links a permanent QR code tattooed on a person's skin to a 
 
 | Layer | Technology | Version |
 |---|---|---|
-| Framework | Laravel | 11.51 (simplified directory structure) |
-| Reactive UI | Livewire | 3.x |
+| Framework | Laravel | ^13.7 (simplified directory structure) |
+| Admin panel | Livewire | 3.x (session auth, `role = admin`) |
+| API auth | Laravel Sanctum | ^4.0 (Bearer tokens) |
+| Billing | Laravel Cashier + Stripe | ^15.0 (Checkout, Portal, webhooks, optional Stripe Tax) |
+| 2FA | Custom TOTP (`TotpService`) | RFC 6238 — avoids `ext-bcmath` |
+| Audit log | `spatie/laravel-activitylog` | ^4.8 (`config/activitylog.php` committed) |
 | Database | MySQL | 8.4.8 |
-| Frontend build | Vite + Tailwind CSS | latest |
+| Frontend build | Vite + Tailwind CSS | latest (admin panel + login assets) |
 | QR generation | `simplesoftwareio/simple-qrcode` | Error Correction Level `H` |
 | PHP | PHP | 8.2+ (strict types required) |
 | Storage | `Storage::disk('public')` | symlinked via `php artisan storage:link` |
@@ -25,7 +49,7 @@ A SaaS platform that links a permanent QR code tattooed on a person's skin to a 
 2. A QR code is generated encoding the URL `https://app.com/t/{short_code}` with error correction level `H` (survives skin distortion).
 3. The owner can attach one active **TattooContent** row to the tattoo — a link, image gallery, or embedded video.
 4. Every QR scan hits `GET /t/{shortCode}`, which reads the active content from cache (5-minute TTL) and renders or redirects accordingly.
-5. The owner can swap content at any time from the dashboard. The cache key `tattoo_content_{shortCode}` is invalidated on every save.
+5. The owner can swap content at any time from the **SPA** (or an admin from the panel). The cache key `tattoo_content_{shortCode}` is invalidated on every change.
 
 ---
 
@@ -120,8 +144,11 @@ DB_PASSWORD=
 
 ```bash
 php artisan migrate
+php artisan db:seed        # admin user, demo client, plans, storage packs
 php artisan storage:link
 ```
+
+The default admin (from `AdminUserSeeder`) is `admin@dynamictattoos.test` / `Admin1234!` — **change it in production**.
 
 **4. Build frontend assets and start the server:**
 
@@ -141,24 +168,40 @@ npm run dev
 php artisan serve
 ```
 
+### Deployment notes
+
+- **Admin access:** seed an admin (above) to reach `/admin`. Non-admins get `403`; guests are redirected to `/login`.
+- **Subdirectory (`/backend`):** if the app is served under a subpath, set `APP_URL=https://your-domain/backend`. The app forces the root URL from `APP_URL` (`AppServiceProvider`), so `route()`, `asset()`/`@vite` and Livewire all carry the prefix. The root redirect uses a named route (not a hardcoded `/admin`) so it keeps the prefix. **Re-run `php artisan config:cache` after changing `APP_URL`.**
+- **`config:cache` + Activity Log:** `config/activitylog.php` is committed so the spatie config survives `config:cache` (otherwise the `activity_log` table name resolves empty). Always `php artisan config:clear` after editing `.env`.
+- **Scheduler:** enable Laravel's cron (`* * * * * php artisan schedule:run`) so `subscriptions:send-renewal-reminders` runs (renewal reminder ~30 days before the annual charge).
+- **Stripe:** point the webhook to `/stripe/webhook`; run `php artisan stripe:sync-plans` after creating/editing plans so Stripe Products/Prices stay in sync.
+- **Assets:** run `npm run build` on deploy — the admin panel and the admin login render via `@vite`. Admin Livewire layouts load **CSS only** (Alpine comes bundled with Livewire; loading `app.js` there would start a second Alpine and break `wire:*`).
+
 ---
 
 ## Directory Structure
 
 ```
 app/
-  Http/Controllers/      # Invokable controllers (single responsibility)
-  Livewire/              # Livewire component classes
+  Http/Controllers/
+    Api/V1/              # REST API controllers (consumed by the SPA)
+    *                    # public web: TattooRedirect, LinkPage, StripeWebhook, HomeRedirect
+  Livewire/Admin/        # Admin panel components (Livewire)
   Models/                # Eloquent models
   Policies/              # Authorization policies (auto-discovered)
-database/
-  migrations/
+  Services/              # Billing (Cashier gateway, Stripe Tax), Referrals, Totp, Uploads, LinkCatalog
+  Listeners/             # HandleCashierWebhook (Stripe subscription/payment events)
+  Console/Commands/      # stripe:sync-plans, subscriptions:send-renewal-reminders
+database/migrations/
 resources/views/
-  livewire/              # Component views + partials/
-  tattoo/                # Public QR destination views
-  dashboard/             # Authenticated user views
+  admin/                 # Admin panel pages (extend layouts/admin)
+  livewire/admin/        # Admin Livewire component views
+  tattoo/                # Public QR scan destination
+  public link pages + auth (admin login / password reset)
 routes/
-  web.php                # All routes (public QR + authenticated dashboard)
+  api.php                # /api/v1/* (Sanctum)
+  web.php                # / → /admin, /t/{code}, /u/{slug}, /stripe/webhook, /admin/*
+  auth.php               # admin login + password reset
 ```
 
 ---
@@ -167,8 +210,12 @@ routes/
 
 | Method | URI | Name | Description |
 |---|---|---|---|
-| `GET` | `/t/{shortCode}` | `tattoo.show` | Public QR scan destination |
-| `GET` | `/dashboard/tattoos/{tattoo}/manage` | `tattoos.manage` | Owner dashboard (auth required) |
+| `GET` | `/` | `home` | Redirects to `/admin` |
+| `GET` | `/t/{shortCode}` | `tattoo.show` | Public QR scan destination (records the scan) |
+| `GET` | `/u/{slug}` | `link-page.show` | Public link page (Linktree-style) |
+| `POST` | `/stripe/webhook` | `cashier.webhook` | Stripe / Cashier webhook |
+| `*` | `/admin/*` | `admin.*` | Admin panel — `auth` + `admin` role (Livewire) |
+| `*` | `/api/v1/*` | `api.v1.*` | REST API — Sanctum (see `docs/api/openapi.yaml`) |
 
 ---
 
@@ -254,7 +301,7 @@ QrCode::format('svg')
 
 - **Key pattern:** `tattoo_content_{shortCode}`
 - **TTL:** 300 seconds (5 minutes), controlled by `TattooRedirectController::CACHE_TTL_SECONDS`
-- **Invalidation:** `Cache::forget("tattoo_content_{$shortCode}")` is called in `ManageTattoo::save()` and any future job that activates/deactivates a `TattooContent` row.
+- **Invalidation:** `Cache::forget("tattoo_content_{$shortCode}")` is called by the API (`Api\V1\TattooContentController@activate`) and by the admin `TattooList` actions (activate version / toggle / delete) whenever a `TattooContent` row changes state.
 
 ---
 
