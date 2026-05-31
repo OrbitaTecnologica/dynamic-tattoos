@@ -9,7 +9,6 @@ use App\Services\Billing\BillingGateway;
 use App\Services\Billing\CashierBillingGateway;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -26,7 +25,6 @@ final class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->forceApplicationUrl();
-        $this->configureLivewireRoutes();
         $this->configureRateLimiting();
 
         Event::listen(WebhookHandled::class, HandleCashierWebhook::class);
@@ -47,21 +45,6 @@ final class AppServiceProvider extends ServiceProvider
         if (is_string($scheme) && $scheme !== '') {
             URL::forceScheme($scheme);
         }
-    }
-
-    private function configureLivewireRoutes(): void
-    {
-        $prefix = trim((string) parse_url((string) config('app.url'), PHP_URL_PATH), '/');
-        $routePrefix = $prefix !== '' ? '/'.$prefix : '';
-
-        app('livewire')->setScriptRoute(static function ($handle) use ($routePrefix): mixed {
-            return Route::get($routePrefix.'/livewire/livewire.js', $handle);
-        });
-
-        app('livewire')->setUpdateRoute(static function ($handle) use ($routePrefix): mixed {
-            return Route::post($routePrefix.'/livewire/update', $handle)
-                ->middleware('web');
-        });
     }
 
     private function configureRateLimiting(): void

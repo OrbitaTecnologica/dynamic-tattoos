@@ -83,8 +83,12 @@ final class ReferralService
             return;
         }
 
-        $rewardCents = (int) round(((float) config('billing.referral_reward', 0)) * 100);
         $referrer = $referral->referrer;
+
+        // Importe: la recompensa propia del plan del referente si la define;
+        // si no, el valor global de config('billing.referral_reward').
+        $rewardEuros = $referrer?->plan?->referral_reward ?? config('billing.referral_reward', 0);
+        $rewardCents = (int) round(((float) $rewardEuros) * 100);
 
         if ($referrer !== null && $rewardCents > 0) {
             try {

@@ -29,6 +29,19 @@
                     </span>
                 </div>
 
+                @if($plan->is_featured || $plan->is_referral)
+                    <div class="flex flex-wrap gap-1.5">
+                        @if($plan->is_featured)
+                            <span class="rounded-full bg-violet-950/60 px-2 py-0.5 text-[10px] font-semibold text-violet-300 ring-1 ring-violet-500/20">★ Destacado</span>
+                        @endif
+                        @if($plan->is_referral)
+                            <span class="rounded-full bg-amber-950/60 px-2 py-0.5 text-[10px] font-semibold text-amber-300 ring-1 ring-amber-500/20">
+                                Referidos · {{ $plan->referral_reward !== null ? number_format((float) $plan->referral_reward, 2).' €' : 'global' }}
+                            </span>
+                        @endif
+                    </div>
+                @endif
+
                 <div>
                     <span class="text-3xl font-bold text-white">${{ number_format((float)$plan->price, 2) }}</span>
                     <span class="text-xs text-gray-500"> / {{ $plan->billing_cycle }}</span>
@@ -124,6 +137,27 @@
                             <label class="text-xs font-medium text-gray-400">Características <span class="text-gray-600">(una por línea)</span></label>
                             <textarea wire:model="featuresRaw" rows="4" class="admin-input w-full resize-none" placeholder="Acceso ilimitado&#10;Soporte 24/7"></textarea>
                         </div>
+                        <div class="space-y-1">
+                            <label class="text-xs font-medium text-gray-400">Almacenamiento (MB)</label>
+                            <input wire:model="storageMb" type="number" min="0" class="admin-input w-full">
+                            @error('storageMb') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="col-span-2 border-t border-white/[0.06] pt-3 space-y-3">
+                            <div class="flex items-center gap-2">
+                                <input wire:model="isFeatured" type="checkbox" id="isFeatured" class="rounded border-white/20 bg-white/5 text-violet-500 focus:ring-violet-500/40">
+                                <label for="isFeatured" class="text-xs text-gray-400">Plan destacado (el “más elegido”)</label>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <input wire:model.live="isReferral" type="checkbox" id="isReferral" class="rounded border-white/20 bg-white/5 text-amber-500 focus:ring-amber-500/40">
+                                <label for="isReferral" class="text-xs text-gray-400">Plan de referidos / Partner <span class="text-gray-600">(QR de tienda + panel de monitorización + recompensa)</span></label>
+                            </div>
+                            <div class="space-y-1" x-show="$wire.isReferral" x-cloak>
+                                <label class="text-xs font-medium text-gray-400">Recompensa por referido (€)</label>
+                                <input wire:model="referralReward" type="number" step="0.01" min="0" class="admin-input w-full" placeholder="Vacío = usar valor global">
+                                @error('referralReward') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                                <p class="text-xs text-gray-600">Lo que se acredita al Partner por cada referido que paga. Vacío = valor global de configuración.</p>
+                            </div>
+                        </div>
                         <div class="col-span-2 flex items-center gap-2">
                             <input wire:model="isActive" type="checkbox" id="isActive" class="rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/40">
                             <label for="isActive" class="text-xs text-gray-400">Plan activo (visible para usuarios)</label>
@@ -149,6 +183,7 @@
     @endif
 
     <style>
+        [x-cloak] { display: none !important; }
         .admin-input {
             @apply rounded-xl bg-white/5 border border-white/[0.08] px-3 py-2 text-sm text-white placeholder-gray-600
                    focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition;

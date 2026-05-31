@@ -97,4 +97,36 @@ final class ReferralApiTest extends TestCase
             'reward_cents' => 500,
         ]);
     }
+
+    public function test_paid_referral_uses_plan_specific_reward(): void
+    {
+        Queue::fake();
+
+        $plan = Plan::query()->create([
+            'name' => 'Partner Pro', 'slug' => 'partner-pro', 'price' => 49.90, 'billing_cycle' => 'yearly',
+            'features' => [], 'max_tattoos' => 99, 'is_active' => true, 'is_referral' => true, 'referral_reward' => 10.00,
+        ]);
+
+        $referrer = User::factory()->create(['referral_code' => 'PARTNERX', 'plan_id' => $plan->id]);
+        $referred = User::factory()->create(['stripe_id' => 'cus_referredX', 'referred_by' => $referrer->id]);
+        Referral::query()->create([
+            'referrer_id' => $referrer->id, 'referred_id' => $referred->id, 'status' => Referral::STATUS_REGISTERED,
+        ]);
+
+        event(new WebhookHandled([
+            'id' => 'evt_ref_2',
+            'type' => 'customer.subscription.created',
+            'data' => ['object' => [
+                'customer' => 'cus_referredX',
+                'current_period_end' => now()->addYear()->timestamp,
+            ]],
+        ]));
+
+        // 10 € del plan del referente, en vez del global de 5 €.
+        $this->assertDatabaseHas('referrals', [
+            'referred_id' => $referred->id,
+            'status' => Referral::STATUS_PAID,
+            'reward_cents' => 1000,
+        ]);
+    }
 }

@@ -30,6 +30,14 @@ final class PricingPlans extends Component
 
     public string $featuresRaw = '';
 
+    public int $storageMb = 100;
+
+    public bool $isFeatured = false;
+
+    public bool $isReferral = false;
+
+    public string $referralReward = '';
+
     public bool $isActive = true;
 
     public int $sortOrder = 0;
@@ -53,8 +61,9 @@ final class PricingPlans extends Component
 
     public function openCreate(): void
     {
-        $this->reset(['editingId', 'name', 'billingCycle', 'stripePriceId', 'price', 'maxTattoos', 'featuresRaw', 'isActive', 'sortOrder']);
+        $this->reset(['editingId', 'name', 'billingCycle', 'stripePriceId', 'price', 'maxTattoos', 'featuresRaw', 'storageMb', 'isFeatured', 'isReferral', 'referralReward', 'isActive', 'sortOrder']);
         $this->billingCycle = 'monthly';
+        $this->storageMb = 100;
         $this->isActive = true;
         $this->showModal = true;
     }
@@ -70,6 +79,10 @@ final class PricingPlans extends Component
         $this->price = (string) $plan->price;
         $this->maxTattoos = $plan->max_tattoos;
         $this->featuresRaw = implode("\n", $plan->features ?? []);
+        $this->storageMb = (int) ($plan->storage_mb ?? 0);
+        $this->isFeatured = $plan->is_featured;
+        $this->isReferral = $plan->is_referral;
+        $this->referralReward = $plan->referral_reward !== null ? (string) $plan->referral_reward : '';
         $this->isActive = $plan->is_active;
         $this->sortOrder = $plan->sort_order;
         $this->showModal = true;
@@ -84,6 +97,10 @@ final class PricingPlans extends Component
             'price' => ['required', 'numeric', 'min:0'],
             'maxTattoos' => ['required', 'integer', 'min:1', 'max:999'],
             'featuresRaw' => ['nullable', 'string'],
+            'storageMb' => ['required', 'integer', 'min:0'],
+            'isFeatured' => ['boolean'],
+            'isReferral' => ['boolean'],
+            'referralReward' => ['nullable', 'numeric', 'min:0'],
             'isActive' => ['boolean'],
             'sortOrder' => ['integer', 'min:0'],
         ]);
@@ -101,6 +118,12 @@ final class PricingPlans extends Component
             'price' => (float) $this->price,
             'max_tattoos' => $this->maxTattoos,
             'features' => array_values($features),
+            'storage_mb' => $this->storageMb,
+            'is_featured' => $this->isFeatured,
+            'is_referral' => $this->isReferral,
+            // Recompensa propia solo si es plan de referidos y se indicó importe;
+            // si queda vacío, se usará el valor global de config('billing.referral_reward').
+            'referral_reward' => ($this->isReferral && $this->referralReward !== '') ? (float) $this->referralReward : null,
             'is_active' => $this->isActive,
             'sort_order' => $this->sortOrder,
         ];

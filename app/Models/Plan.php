@@ -25,6 +25,7 @@ final class Plan extends Model
         'is_active',
         'is_featured',
         'is_referral',
+        'referral_reward',
         'sort_order',
     ];
 
@@ -36,6 +37,7 @@ final class Plan extends Model
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'is_referral' => 'boolean',
+            'referral_reward' => 'decimal:2',
             'max_tattoos' => 'integer',
             'storage_mb' => 'integer',
             'sort_order' => 'integer',

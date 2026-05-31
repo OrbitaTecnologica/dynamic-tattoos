@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Feature\Admin;
 
+use App\Livewire\Admin\PricingPlans;
 use App\Livewire\Admin\Referrals;
 use App\Livewire\Admin\StoragePacks;
 use App\Livewire\Admin\TattooList;
 use App\Livewire\Admin\UserList;
+use App\Models\Plan;
 use App\Models\Referral;
 use App\Models\StoragePack;
 use App\Models\Tattoo;
@@ -51,6 +53,48 @@ final class AdminModulesTest extends TestCase
 
         Livewire::test(StoragePacks::class)->call('deletePack', $pack->id);
         $this->assertDatabaseMissing('storage_packs', ['id' => $pack->id]);
+    }
+
+    public function test_plan_can_be_created_as_referral_with_per_plan_reward(): void
+    {
+        $this->actingAs($this->admin());
+
+        Livewire::test(PricingPlans::class)
+            ->set('name', 'Partner X')
+            ->set('price', '29.90')
+            ->set('billingCycle', 'yearly')
+            ->set('maxTattoos', 99)
+            ->set('storageMb', 10000)
+            ->set('isFeatured', true)
+            ->set('isReferral', true)
+            ->set('referralReward', '8')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('plans', [
+            'name' => 'Partner X',
+            'is_referral' => 1,
+            'is_featured' => 1,
+            'storage_mb' => 10000,
+        ]);
+
+        $plan = Plan::query()->where('name', 'Partner X')->firstOrFail();
+        $this->assertSame('8.00', (string) $plan->referral_reward);
+    }
+
+    public function test_non_referral_plan_does_not_store_reward(): void
+    {
+        $this->actingAs($this->admin());
+
+        Livewire::test(PricingPlans::class)
+            ->set('name', 'Básico Y')
+            ->set('price', '4.90')
+            ->set('isReferral', false)
+            ->set('referralReward', '8')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertNull(Plan::query()->where('name', 'Básico Y')->firstOrFail()->referral_reward);
     }
 
     public function test_admin_cannot_delete_self_but_can_delete_others_and_reset_2fa(): void
