@@ -8,6 +8,7 @@ use App\Models\Tattoo;
 use App\Models\TattooContent;
 use App\Models\TattooScan;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -62,7 +63,7 @@ final class MetricsDashboard extends Component
     }
 
     #[Computed]
-    public function recentActivity(): \Illuminate\Database\Eloquent\Collection
+    public function recentActivity(): Collection
     {
         return TattooScan::query()
             ->with('tattoo:id,short_code,name')

@@ -11,33 +11,37 @@ use Livewire\Component;
 
 final class AccountSettings extends Component
 {
-    public string $name  = '';
+    public string $name = '';
+
     public string $email = '';
 
     // Password change
     public string $currentPassword = '';
-    public string $newPassword     = '';
+
+    public string $newPassword = '';
+
     public string $confirmPassword = '';
 
     public bool $passwordSaved = false;
-    public bool $profileSaved  = false;
+
+    public bool $profileSaved = false;
 
     public function mount(): void
     {
-        $user        = auth()->user();
-        $this->name  = $user->name;
+        $user = auth()->user();
+        $this->name = $user->name;
         $this->email = $user->email;
     }
 
     public function saveProfile(): void
     {
         $this->validate([
-            'name'  => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', "unique:users,email,{$this->getAuthId()}"],
         ]);
 
         auth()->user()->update([
-            'name'  => $this->name,
+            'name' => $this->name,
             'email' => $this->email,
         ]);
 
@@ -49,7 +53,7 @@ final class AccountSettings extends Component
     {
         $this->validate([
             'currentPassword' => ['required', 'string'],
-            'newPassword'     => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
+            'newPassword' => ['required', 'confirmed', Password::min(8)->mixedCase()->numbers()],
         ]);
 
         $user = auth()->user();

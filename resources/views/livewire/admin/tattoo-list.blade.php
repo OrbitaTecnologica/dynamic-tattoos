@@ -129,13 +129,18 @@
                             {{-- Actions --}}
                             <td class="px-5 py-4 text-right">
                                 <div class="flex items-center justify-end gap-2">
-                                    <a href="{{ route('tattoos.manage', $tattoo) }}"
-                                       class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
-                                        Editar
-                                    </a>
+                                    <button wire:click="openEditName({{ $tattoo->id }})"
+                                            class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                        Renombrar
+                                    </button>
                                     <button wire:click="openHistory({{ $tattoo->id }})"
                                             class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-violet-500/40 hover:text-violet-300">
                                         Historial
+                                    </button>
+                                    <button wire:click="delete({{ $tattoo->id }})"
+                                            wire:confirm="¿Eliminar el tatuaje {{ $tattoo->short_code }}? Se borrarán sus versiones y escaneos."
+                                            class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-red-500/40 hover:text-red-400">
+                                        Eliminar
                                     </button>
                                 </div>
                             </td>
@@ -210,11 +215,51 @@
                                 @elseif($item->type === 'video')
                                     <p class="text-xs text-gray-400 mt-1 capitalize">{{ $item->payload['platform'] ?? '' }}</p>
                                 @endif
+                                @unless($item->is_active)
+                                    <button wire:click="activateContent({{ $item->id }})"
+                                            class="mt-2 rounded-lg bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                        Activar esta versión
+                                    </button>
+                                @endunless
                             </div>
                         </div>
                     @empty
                         <p class="text-sm text-gray-600 text-center py-8">Sin historial disponible.</p>
                     @endforelse
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- ── Rename Modal ─────────────────────────────────────────────────────── --}}
+    @if($showEditModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" wire:click="$set('showEditModal', false)"></div>
+            <div class="relative glass rounded-2xl w-full max-w-md">
+                <div class="flex items-center justify-between border-b border-white/[0.06] px-6 py-4">
+                    <h2 class="text-sm font-semibold text-white">Renombrar tatuaje</h2>
+                    <button wire:click="$set('showEditModal', false)" class="text-gray-500 hover:text-white transition">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+                <div class="px-6 py-5 space-y-1.5">
+                    <label class="text-xs font-medium text-gray-400">Nombre</label>
+                    <input wire:model="editName" type="text"
+                           class="w-full rounded-xl bg-white/5 border border-white/[0.08] px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition">
+                    @error('editName') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                </div>
+                <div class="border-t border-white/[0.06] px-6 py-4 flex items-center justify-end gap-3">
+                    <button wire:click="$set('showEditModal', false)"
+                            class="rounded-xl px-4 py-2 text-sm text-gray-500 ring-1 ring-white/10 transition hover:text-gray-300">
+                        Cancelar
+                    </button>
+                    <button wire:click="saveName"
+                            wire:loading.attr="disabled"
+                            wire:target="saveName"
+                            class="rounded-xl bg-gradient-to-r from-cyan-500 to-violet-500 px-5 py-2 text-sm font-semibold text-white shadow-lg shadow-cyan-500/20 transition disabled:opacity-60">
+                        <span wire:loading.remove wire:target="saveName">Guardar</span>
+                        <span wire:loading wire:target="saveName">Guardando…</span>
+                    </button>
                 </div>
             </div>
         </div>

@@ -89,34 +89,58 @@
             </div>
 
             {{-- Nav items --}}
-            <nav class="flex-1 overflow-y-auto scrollbar-thin py-4 space-y-1 px-2">
+            <nav class="flex-1 overflow-y-auto scrollbar-thin py-4 space-y-4 px-2">
                 @php
-                    $navItems = [
-                        ['route' => 'admin.dashboard',    'label' => 'Dashboard',     'icon' => 'chart'],
-                        ['route' => 'admin.billing-alerts','label' => 'Alertas Billing','icon' => 'alerts'],
-                        ['route' => 'admin.tattoos',      'label' => 'Tatuajes',      'icon' => 'qr'],
-                        ['route' => 'admin.scans',        'label' => 'Monitor Scans', 'icon' => 'scan'],
-                        ['route' => 'admin.qr-generator', 'label' => 'Generar QRs',   'icon' => 'generator'],
-                        ['route' => 'admin.pricing',      'label' => 'Planes',        'icon' => 'pricing'],
-                        ['route' => 'admin.users',        'label' => 'Usuarios',      'icon' => 'users'],
-                        ['route' => 'admin.account',      'label' => 'Mi Cuenta',     'icon' => 'account'],
+                    $navGroups = [
+                        'Panel' => [
+                            ['route' => 'admin.dashboard', 'label' => 'Dashboard', 'icon' => 'chart'],
+                        ],
+                        'Contenido' => [
+                            ['route' => 'admin.tattoos',      'label' => 'Tatuajes',     'icon' => 'qr'],
+                            ['route' => 'admin.qr-generator', 'label' => 'Generar QRs',  'icon' => 'generator'],
+                            ['route' => 'admin.scans',        'label' => 'Monitor Scans','icon' => 'scan'],
+                            ['route' => 'admin.link-pages',   'label' => 'Link Pages',   'icon' => 'link'],
+                        ],
+                        'Clientes' => [
+                            ['route' => 'admin.users',         'label' => 'Usuarios',       'icon' => 'users'],
+                            ['route' => 'admin.companies',     'label' => 'Empresas',       'icon' => 'company'],
+                            ['route' => 'admin.team-members',  'label' => 'Equipos',        'icon' => 'team'],
+                            ['route' => 'admin.storage-usage', 'label' => 'Almacenamiento', 'icon' => 'folder'],
+                        ],
+                        'Monetización' => [
+                            ['route' => 'admin.pricing',        'label' => 'Planes',         'icon' => 'pricing'],
+                            ['route' => 'admin.storage-packs',  'label' => 'Storage Packs',  'icon' => 'storage'],
+                            ['route' => 'admin.subscriptions',  'label' => 'Suscripciones',  'icon' => 'subscription'],
+                            ['route' => 'admin.referrals',      'label' => 'Referidos',      'icon' => 'referral'],
+                            ['route' => 'admin.billing-alerts', 'label' => 'Alertas Billing','icon' => 'alerts'],
+                        ],
+                        'Sistema' => [
+                            ['route' => 'admin.activity-log', 'label' => 'Actividad',  'icon' => 'activity'],
+                            ['route' => 'admin.api-tokens',   'label' => 'Tokens API', 'icon' => 'key'],
+                            ['route' => 'admin.account',      'label' => 'Mi Cuenta',  'icon' => 'account'],
+                        ],
                     ];
                 @endphp
 
-                @foreach($navItems as $item)
-                    <a href="{{ route($item['route']) }}"
-                       class="sidebar-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-all duration-150 hover:text-white glass-hover {{ request()->routeIs($item['route']) ? 'active' : '' }}">
-                        <span class="flex-shrink-0 h-5 w-5">
-                            @include('components.admin.icons.' . $item['icon'])
-                        </span>
-                        <span x-show="sidebarOpen"
-                              x-transition:enter="transition-opacity duration-150 delay-100"
-                              x-transition:enter-start="opacity-0"
-                              x-transition:enter-end="opacity-100"
-                              class="whitespace-nowrap">
-                            {{ $item['label'] }}
-                        </span>
-                    </a>
+                @foreach($navGroups as $section => $items)
+                    <div class="space-y-1">
+                        <p x-show="sidebarOpen" class="px-3 pb-0.5 text-[10px] font-semibold uppercase tracking-widest text-gray-600 whitespace-nowrap">{{ $section }}</p>
+                        @foreach($items as $item)
+                            <a href="{{ route($item['route']) }}"
+                               class="sidebar-link group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-gray-400 transition-all duration-150 hover:text-white glass-hover {{ request()->routeIs($item['route']) ? 'active' : '' }}">
+                                <span class="flex-shrink-0 h-5 w-5">
+                                    @include('components.admin.icons.' . $item['icon'])
+                                </span>
+                                <span x-show="sidebarOpen"
+                                      x-transition:enter="transition-opacity duration-150 delay-100"
+                                      x-transition:enter-start="opacity-0"
+                                      x-transition:enter-end="opacity-100"
+                                      class="whitespace-nowrap">
+                                    {{ $item['label'] }}
+                                </span>
+                            </a>
+                        @endforeach
+                    </div>
                 @endforeach
             </nav>
 

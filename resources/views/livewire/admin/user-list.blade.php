@@ -68,10 +68,29 @@
                                 {{ $user->created_at?->format('d/m/Y') }}
                             </td>
                             <td class="px-5 py-4 text-right">
-                                <button wire:click="openEdit({{ $user->id }})"
-                                        class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
-                                    Editar
-                                </button>
+                                <div class="flex items-center justify-end gap-2">
+                                    @if($user->two_factor_confirmed_at)
+                                        <span title="2FA activo" class="inline-flex h-5 w-5 items-center justify-center rounded-full bg-emerald-950/60 text-emerald-300 ring-1 ring-emerald-500/20">
+                                            <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                                        </span>
+                                        <button wire:click="resetTwoFactor({{ $user->id }})"
+                                                wire:confirm="¿Restablecer el 2FA de este usuario? Tendrá que volver a configurarlo."
+                                                class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-amber-500/40 hover:text-amber-300">
+                                            Reset 2FA
+                                        </button>
+                                    @endif
+                                    <button wire:click="openEdit({{ $user->id }})"
+                                            class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                        Editar
+                                    </button>
+                                    @if($user->id !== auth()->id())
+                                        <button wire:click="deleteUser({{ $user->id }})"
+                                                wire:confirm="¿Eliminar a {{ $user->name }}? Se borrarán sus tatuajes, QRs y datos asociados."
+                                                class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-red-500/40 hover:text-red-400">
+                                            Eliminar
+                                        </button>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -133,6 +152,24 @@
                                 @endforeach
                             </select>
                         </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-400">Ciudad</label>
+                            <input wire:model="userCity" type="text"
+                                   class="w-full rounded-xl bg-white/5 border border-white/[0.08] px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition">
+                            @error('userCity') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-xs font-medium text-gray-400">País</label>
+                            <input wire:model="userCountry" type="text"
+                                   class="w-full rounded-xl bg-white/5 border border-white/[0.08] px-4 py-2.5 text-sm text-white focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition">
+                            @error('userCountry') <p class="text-xs text-red-400">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input wire:model="userIsPremium" type="checkbox" id="userIsPremium" class="rounded border-white/20 bg-white/5 text-cyan-500 focus:ring-cyan-500/40">
+                        <label for="userIsPremium" class="text-xs text-gray-400">Marcar como premium</label>
                     </div>
                 </div>
                 <div class="border-t border-white/[0.06] px-6 py-4 flex items-center justify-end gap-3">

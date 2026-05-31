@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin;
 
 use App\Models\TattooScan;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -18,7 +19,7 @@ final class ScanFeed extends Component
     // -------------------------------------------------------------------------
 
     #[Computed]
-    public function scans(): \Illuminate\Database\Eloquent\Collection
+    public function scans(): Collection
     {
         return TattooScan::query()
             ->with('tattoo:id,short_code,name')

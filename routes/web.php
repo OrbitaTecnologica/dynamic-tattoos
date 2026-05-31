@@ -54,13 +54,30 @@ Route::get('/u/{slug}/c/{link}', [LinkPageController::class, 'redirect'])
 */
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'admin.dashboard')->name('dashboard');
-    Route::view('/billing-alerts', 'admin.billing-alerts')->name('billing-alerts');
+
+    // Contenido
     Route::view('/tattoos', 'admin.tattoos')->name('tattoos');
-    Route::view('/scans', 'admin.scans')->name('scans');
     Route::view('/qr-generator', 'admin.qr-generator')->name('qr-generator');
-    Route::view('/pricing', 'admin.pricing')->name('pricing');
-    Route::view('/account', 'admin.account')->name('account');
+    Route::view('/scans', 'admin.scans')->name('scans');
+    Route::view('/link-pages', 'admin.link-pages')->name('link-pages');
+
+    // Clientes
     Route::view('/users', 'admin.users')->name('users');
+    Route::view('/companies', 'admin.companies')->name('companies');
+    Route::view('/team-members', 'admin.team-members')->name('team-members');
+    Route::view('/storage-usage', 'admin.storage-usage')->name('storage-usage');
+
+    // Monetización
+    Route::view('/pricing', 'admin.pricing')->name('pricing');
+    Route::view('/storage-packs', 'admin.storage-packs')->name('storage-packs');
+    Route::view('/subscriptions', 'admin.subscriptions')->name('subscriptions');
+    Route::view('/referrals', 'admin.referrals')->name('referrals');
+    Route::view('/billing-alerts', 'admin.billing-alerts')->name('billing-alerts');
+
+    // Sistema
+    Route::view('/activity-log', 'admin.activity-log')->name('activity-log');
+    Route::view('/api-tokens', 'admin.api-tokens')->name('api-tokens');
+    Route::view('/account', 'admin.account')->name('account');
 });
 
 require __DIR__.'/auth.php';

@@ -6,6 +6,7 @@ namespace App\Livewire\Admin;
 
 use App\Models\Tattoo;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -14,9 +15,11 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 final class QrGenerator extends Component
 {
-    public int    $quantity   = 1;
-    public ?int   $assignToUserId = null;
-    public string $prefix     = '';
+    public int $quantity = 1;
+
+    public ?int $assignToUserId = null;
+
+    public string $prefix = '';
 
     /** @var array<int, array{short_code: string, qr_svg: string, url: string}> */
     public array $generatedCodes = [];
@@ -28,7 +31,7 @@ final class QrGenerator extends Component
     // -------------------------------------------------------------------------
 
     #[Computed]
-    public function users(): \Illuminate\Database\Eloquent\Collection
+    public function users(): Collection
     {
         return User::query()
             ->select('id', 'name', 'email')
@@ -43,9 +46,9 @@ final class QrGenerator extends Component
     public function generate(): void
     {
         $this->validate([
-            'quantity'       => ['required', 'integer', 'min:1', 'max:50'],
+            'quantity' => ['required', 'integer', 'min:1', 'max:50'],
             'assignToUserId' => ['nullable', 'integer', 'exists:users,id'],
-            'prefix'         => ['nullable', 'string', 'max:4', 'regex:/^[a-zA-Z0-9]*$/'],
+            'prefix' => ['nullable', 'string', 'max:4', 'regex:/^[a-zA-Z0-9]*$/'],
         ]);
 
         $userId = $this->assignToUserId ?? auth()->id();
@@ -55,26 +58,26 @@ final class QrGenerator extends Component
 
             for ($i = 0; $i < $this->quantity; $i++) {
                 $shortCode = Tattoo::generateUniqueShortCode(8);
-                $name      = trim($this->prefix . ' QR-' . strtoupper(substr($shortCode, 0, 4)));
+                $name = trim($this->prefix.' QR-'.strtoupper(substr($shortCode, 0, 4)));
 
                 $tattoo = Tattoo::create([
-                    'user_id'    => $userId,
+                    'user_id' => $userId,
                     'short_code' => $shortCode,
-                    'name'       => $name,
-                    'is_active'  => true,
+                    'name' => $name,
+                    'is_active' => true,
                 ]);
 
-                $url    = route('tattoo.show', $shortCode);
-                $qrSvg  = QrCode::format('svg')
+                $url = route('tattoo.show', $shortCode);
+                $qrSvg = QrCode::format('svg')
                     ->errorCorrection('H')
                     ->size(200)
                     ->generate($url);
 
                 $result[] = [
                     'short_code' => $shortCode,
-                    'qr_svg'     => $qrSvg,
-                    'url'        => $url,
-                    'tattoo_id'  => $tattoo->id,
+                    'qr_svg' => $qrSvg,
+                    'url' => $url,
+                    'tattoo_id' => $tattoo->id,
                 ];
             }
 
