@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\HomeRedirectController;
 use App\Http\Controllers\LinkPageController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TattooRedirectController;
@@ -10,9 +11,10 @@ use Illuminate\Support\Facades\Route;
 /*
 |--------------------------------------------------------------------------
 | Raíz → panel administrativo (el frontend del cliente vive en el SPA)
+| Usa route() (no una ruta absoluta) para respetar el prefijo /backend.
 |--------------------------------------------------------------------------
 */
-Route::redirect('/', '/admin')->name('home');
+Route::get('/', HomeRedirectController::class)->name('home');
 
 Route::view('/docs/api', 'docs.api')->name('docs.api');
 Route::get('/docs/api/openapi.yaml', static function () {
