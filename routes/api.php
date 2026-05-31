@@ -3,6 +3,11 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AuthTokenController;
+use App\Http\Controllers\Api\V1\BillingCheckoutController;
+use App\Http\Controllers\Api\V1\BillingPortalApiController;
+use App\Http\Controllers\Api\V1\BillingSubscriptionController;
+use App\Http\Controllers\Api\V1\LinkPageController;
+use App\Http\Controllers\Api\V1\LinkPageLinkController;
 use App\Http\Controllers\Api\V1\Me\AccountController;
 use App\Http\Controllers\Api\V1\Me\ActivityController;
 use App\Http\Controllers\Api\V1\Me\BillingController as MeBillingController;
@@ -10,31 +15,38 @@ use App\Http\Controllers\Api\V1\Me\CompanyController;
 use App\Http\Controllers\Api\V1\Me\NotificationController;
 use App\Http\Controllers\Api\V1\Me\PreferenceController;
 use App\Http\Controllers\Api\V1\Me\ProfileController;
+use App\Http\Controllers\Api\V1\Me\ReferralController as MeReferralController;
 use App\Http\Controllers\Api\V1\Me\SecurityController;
 use App\Http\Controllers\Api\V1\Me\SessionController;
 use App\Http\Controllers\Api\V1\Me\StatsController;
 use App\Http\Controllers\Api\V1\Me\StorageController;
 use App\Http\Controllers\Api\V1\Me\TeamController;
 use App\Http\Controllers\Api\V1\Me\TwoFactorController;
-use App\Http\Controllers\Api\V1\StoragePackController;
-use App\Http\Controllers\Api\V1\BillingCheckoutController;
-use App\Http\Controllers\Api\V1\BillingPortalApiController;
-use App\Http\Controllers\Api\V1\BillingSubscriptionController;
-use App\Http\Controllers\Api\V1\LinkPageController;
-use App\Http\Controllers\Api\V1\LinkPageLinkController;
 use App\Http\Controllers\Api\V1\PlanController;
 use App\Http\Controllers\Api\V1\QrCodeController;
+use App\Http\Controllers\Api\V1\ReferralVisitController;
+use App\Http\Controllers\Api\V1\StoragePackController;
 use App\Http\Controllers\Api\V1\TattooContentController;
 use App\Http\Controllers\Api\V1\TattooController;
 use App\Http\Controllers\Api\V1\TattooScanController;
+use App\Http\Middleware\TrackTeamMemberActivity;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
+    Route::post('/auth/register', [AuthTokenController::class, 'register'])
+        ->middleware('throttle:api-auth')
+        ->name('api.v1.auth.register');
+
     Route::post('/auth/login', [AuthTokenController::class, 'store'])
         ->middleware('throttle:api-auth')
         ->name('api.v1.auth.login');
 
-    Route::middleware(['auth:sanctum', 'throttle:api', \App\Http\Middleware\TrackTeamMemberActivity::class])->group(function (): void {
+    // Visita/escaneo del QR de referidos (público).
+    Route::post('/referrals/visit', ReferralVisitController::class)
+        ->middleware('throttle:api')
+        ->name('api.v1.referrals.visit');
+
+    Route::middleware(['auth:sanctum', 'throttle:api', TrackTeamMemberActivity::class])->group(function (): void {
         Route::get('/auth/me', [AuthTokenController::class, 'me'])
             ->name('api.v1.auth.me');
 
@@ -131,6 +143,10 @@ Route::prefix('v1')->group(function (): void {
             ->name('api.v1.me.stats');
         Route::get('/me/activity', [ActivityController::class, 'index'])
             ->name('api.v1.me.activity');
+
+        // Cuenta: referidos (solo plan Partner)
+        Route::get('/me/referrals', [MeReferralController::class, 'index'])
+            ->name('api.v1.me.referrals');
 
         // Cuenta: 2FA
         Route::post('/me/2fa/enable', [TwoFactorController::class, 'enable'])

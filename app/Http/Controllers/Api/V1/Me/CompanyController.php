@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\UpdateCompanyRequest;
 use App\Http\Resources\Api\V1\CompanyResource;
 use App\Models\Company;
 use App\Models\User;
+use App\Services\Billing\StripeTaxProfile;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -21,10 +22,17 @@ final class CompanyController extends Controller
         ]);
     }
 
-    public function update(UpdateCompanyRequest $request): JsonResponse
+    public function update(UpdateCompanyRequest $request, StripeTaxProfile $taxProfile): JsonResponse
     {
-        $company = $this->resolve($request->user());
+        /** @var User $user */
+        $user = $request->user();
+        $company = $this->resolve($user);
         $company->update($request->validated());
+
+        // Propaga el NIF/IVA a Stripe si el cliente ya existe en Stripe.
+        if (config('billing.tax_enabled') && $user->hasStripeId()) {
+            $taxProfile->sync($user->refresh());
+        }
 
         return response()->json([
             'data' => new CompanyResource($company),

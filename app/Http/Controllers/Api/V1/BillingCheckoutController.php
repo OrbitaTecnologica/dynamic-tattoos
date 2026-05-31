@@ -22,11 +22,13 @@ final class BillingCheckoutController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        $frontend = rtrim((string) config('app.frontend_url'), '/');
+
         $checkoutUrl = $billingGateway->createCheckoutUrl(
             user: $user,
             plan: $plan,
-            successUrl: route('billing') . '?checkout=success',
-            cancelUrl: route('billing') . '?checkout=cancelled',
+            successUrl: $frontend.'/mi-cuenta?checkout=success',
+            cancelUrl: $frontend.'/mi-cuenta?checkout=cancelled',
         );
 
         return response()->json([

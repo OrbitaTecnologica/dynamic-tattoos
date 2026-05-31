@@ -23,6 +23,8 @@ final class UserResource extends JsonResource
             'email' => $this->email,
             'birthdate' => $this->birthdate?->toDateString(),
             'gender' => $this->gender,
+            'city' => $this->city,
+            'country' => $this->country,
             'phones' => $this->phones ?? [],
             'avatar_url' => $this->avatar_path ? Storage::disk('public')->url($this->avatar_path) : null,
             'language' => $this->language,

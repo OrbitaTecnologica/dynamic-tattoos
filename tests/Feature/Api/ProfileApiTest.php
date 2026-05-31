@@ -26,11 +26,15 @@ final class ProfileApiTest extends TestCase
                 'first_name' => 'Miguel',
                 'last_name' => 'Novoa',
                 'gender' => 'm',
+                'city' => 'Madrid',
+                'country' => 'España',
                 'phones' => [['code' => '+34', 'number' => '612 345 678']],
             ])
             ->assertOk()
             ->assertJsonPath('data.first_name', 'Miguel')
             ->assertJsonPath('data.name', 'Miguel Novoa')
+            ->assertJsonPath('data.city', 'Madrid')
+            ->assertJsonPath('data.country', 'España')
             ->assertJsonPath('data.phones.0.code', '+34');
     }
 

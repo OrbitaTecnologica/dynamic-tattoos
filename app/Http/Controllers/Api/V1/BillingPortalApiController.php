@@ -19,7 +19,8 @@ final class BillingPortalApiController extends Controller
 
         abort_unless($user->stripe_id !== null, 422, 'El usuario no tiene customer de Stripe asociado.');
 
-        $portalUrl = $billingGateway->createPortalUrl($user, route('billing'));
+        $returnUrl = rtrim((string) config('app.frontend_url'), '/').'/mi-cuenta';
+        $portalUrl = $billingGateway->createPortalUrl($user, $returnUrl);
 
         return response()->json([
             'data' => [

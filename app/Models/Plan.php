@@ -21,17 +21,23 @@ final class Plan extends Model
         'stripe_price_id',
         'features',
         'max_tattoos',
+        'storage_mb',
         'is_active',
+        'is_featured',
+        'is_referral',
         'sort_order',
     ];
 
     protected function casts(): array
     {
         return [
-            'price'      => 'decimal:2',
-            'features'   => 'array',
-            'is_active'  => 'boolean',
+            'price' => 'decimal:2',
+            'features' => 'array',
+            'is_active' => 'boolean',
+            'is_featured' => 'boolean',
+            'is_referral' => 'boolean',
             'max_tattoos' => 'integer',
+            'storage_mb' => 'integer',
             'sort_order' => 'integer',
         ];
     }

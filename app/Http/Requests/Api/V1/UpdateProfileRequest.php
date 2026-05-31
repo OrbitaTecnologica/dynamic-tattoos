@@ -23,6 +23,8 @@ final class UpdateProfileRequest extends FormRequest
             'last_name' => ['sometimes', 'nullable', 'string', 'max:100'],
             'birthdate' => ['sometimes', 'nullable', 'date'],
             'gender' => ['sometimes', 'nullable', 'string', 'max:20'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:120'],
+            'country' => ['sometimes', 'nullable', 'string', 'max:120'],
             'phones' => ['sometimes', 'nullable', 'array'],
             'phones.*.code' => ['required_with:phones', 'string', 'max:8'],
             'phones.*.number' => ['required_with:phones', 'string', 'max:40'],

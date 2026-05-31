@@ -13,14 +13,28 @@ use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse
 
 final class CashierBillingGateway implements BillingGateway
 {
+    public function __construct(private readonly StripeTaxProfile $taxProfile) {}
+
     public function createCheckoutUrl(User $user, Plan $plan, string $successUrl, string $cancelUrl): string
     {
+        $options = [
+            'success_url' => $successUrl,
+            'cancel_url' => $cancelUrl,
+        ];
+
+        if (config('billing.tax_enabled')) {
+            // Empuja NIF/IVA del cliente a Stripe y activa IVA + recogida fiscal.
+            $this->taxProfile->sync($user);
+
+            $options['automatic_tax'] = ['enabled' => true];
+            $options['tax_id_collection'] = ['enabled' => true];
+            $options['billing_address_collection'] = 'required';
+            $options['customer_update'] = ['address' => 'auto', 'name' => 'auto'];
+        }
+
         $checkoutResponse = $user
             ->newSubscription('default', (string) $plan->stripe_price_id)
-            ->checkout([
-                'success_url' => $successUrl,
-                'cancel_url' => $cancelUrl,
-            ]);
+            ->checkout($options);
 
         return $this->extractUrl($checkoutResponse);
     }

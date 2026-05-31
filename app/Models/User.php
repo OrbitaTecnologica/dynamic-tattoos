@@ -15,10 +15,10 @@ use Laravel\Sanctum\HasApiTokens;
 
 final class User extends Authenticatable
 {
+    use Billable;
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
-    use Billable;
 
     protected $fillable = [
         'name',
@@ -26,6 +26,8 @@ final class User extends Authenticatable
         'last_name',
         'birthdate',
         'gender',
+        'city',
+        'country',
         'phones',
         'avatar_path',
         'language',
@@ -51,15 +53,17 @@ final class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'plan_expires_at'   => 'datetime',
-            'birthdate'         => 'date',
-            'phones'            => 'array',
+            'plan_expires_at' => 'datetime',
+            'renews_at' => 'datetime',
+            'renewal_reminded_at' => 'datetime',
+            'birthdate' => 'date',
+            'phones' => 'array',
             'notification_preferences' => 'array',
             'two_factor_secret' => 'encrypted',
             'two_factor_recovery_codes' => 'encrypted:array',
             'two_factor_confirmed_at' => 'datetime',
-            'password'          => 'hashed',
-            'is_premium'        => 'boolean',
+            'password' => 'hashed',
+            'is_premium' => 'boolean',
         ];
     }
 
@@ -71,10 +75,10 @@ final class User extends Authenticatable
     public const NOTIFICATION_DEFAULTS = [
         'qr_created' => ['email' => true, 'push' => true],
         'qr_scanned' => ['email' => false, 'push' => true],
-        'billing'    => ['email' => true, 'push' => false],
-        'security'   => ['email' => true, 'push' => true],
-        'product'    => ['email' => true, 'push' => false],
-        'marketing'  => ['email' => false, 'push' => false],
+        'billing' => ['email' => true, 'push' => false],
+        'security' => ['email' => true, 'push' => true],
+        'product' => ['email' => true, 'push' => false],
+        'marketing' => ['email' => false, 'push' => false],
     ];
 
     // -------------------------------------------------------------------------
@@ -114,6 +118,27 @@ final class User extends Authenticatable
     public function teamMembers(): HasMany
     {
         return $this->hasMany(TeamMember::class, 'owner_id');
+    }
+
+    public function referralsMade(): HasMany
+    {
+        return $this->hasMany(Referral::class, 'referrer_id');
+    }
+
+    public function referralVisits(): HasMany
+    {
+        return $this->hasMany(ReferralVisit::class, 'referrer_id');
+    }
+
+    public function referredBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referred_by');
+    }
+
+    /** El plan actual del usuario incluye la función de referidos/monitorización. */
+    public function hasReferralPlan(): bool
+    {
+        return $this->plan?->is_referral === true;
     }
 
     public function hasTwoFactorEnabled(): bool

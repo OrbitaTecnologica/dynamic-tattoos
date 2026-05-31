@@ -27,7 +27,9 @@ final class BillingController extends Controller
             'data' => [
                 'status' => $this->resolveStatus($subscription),
                 'plan' => $plan instanceof Plan ? new PlanResource($plan) : null,
-                'next_billing' => $subscription?->asStripeSubscription()?->current_period_end ?? null,
+                'has_referrals' => $user->hasReferralPlan(),
+                'renews_at' => $user->renews_at?->toIso8601String(),
+                'next_billing' => $user->renews_at?->toIso8601String(),
                 'ends_at' => $subscription?->ends_at?->toIso8601String(),
                 'payment_method' => $user->pm_type !== null ? [
                     'brand' => $user->pm_type,

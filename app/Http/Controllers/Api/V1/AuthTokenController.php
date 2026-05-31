@@ -6,8 +6,10 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
+use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\Referrals\ReferralService;
 use App\Services\TotpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -16,6 +18,39 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthTokenController extends Controller
 {
+    public function register(RegisterRequest $request, ReferralService $referrals): JsonResponse
+    {
+        $user = User::query()->create([
+            'name' => trim((string) $request->input('name')),
+            'email' => mb_strtolower((string) $request->input('email')),
+            'password' => (string) $request->input('password'),
+            'role' => 'user',
+        ]);
+
+        $referrals->attach($user, $request->input('referral_code'));
+
+        $tokenName = (string) $request->input('device_name', 'api-token');
+        $newToken = $user->createToken($tokenName);
+        $newToken->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 512),
+        ])->save();
+
+        activity('account')
+            ->causedBy($user)
+            ->event('account_created')
+            ->withProperties(['detail' => 'Bienvenido a Dynamic Tattoos'])
+            ->log('Cuenta creada');
+
+        return response()->json([
+            'data' => [
+                'token' => $newToken->plainTextToken,
+                'token_type' => 'Bearer',
+                'user' => new UserResource($user),
+            ],
+        ], 201);
+    }
+
     /**
      * @throws ValidationException
      */

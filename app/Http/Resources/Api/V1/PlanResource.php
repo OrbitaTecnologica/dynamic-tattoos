@@ -24,6 +24,8 @@ final class PlanResource extends JsonResource
             'features' => $this->features,
             'max_tattoos' => $this->max_tattoos,
             'is_active' => $this->is_active,
+            'is_featured' => (bool) $this->is_featured,
+            'is_referral' => (bool) $this->is_referral,
             'sort_order' => $this->sort_order,
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
