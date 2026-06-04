@@ -31,6 +31,7 @@ final class UpdateLinkPageRequest extends FormRequest
             'theme_key' => ['sometimes', 'string', 'max:64'],
             'theme_overrides' => ['sometimes', 'nullable', 'array'],
             'is_published' => ['sometimes', 'boolean'],
+            'onboarding_completed' => ['sometimes', 'boolean'],
         ];
     }
 }

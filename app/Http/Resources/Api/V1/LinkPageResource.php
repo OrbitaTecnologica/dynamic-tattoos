@@ -24,6 +24,7 @@ final class LinkPageResource extends JsonResource
             'cover_url' => $this->cover_path ? Storage::disk('public')->url($this->cover_path) : null,
             'theme_key' => $this->theme_key,
             'theme_overrides' => $this->theme_overrides,
+            'onboarding_completed' => (bool) $this->onboarding_completed,
             'is_published' => $this->is_published,
             'views_count' => $this->views_count,
             'public_url' => $this->publicUrl(),
