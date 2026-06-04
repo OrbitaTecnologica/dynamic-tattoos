@@ -210,9 +210,15 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/link-page/avatar', [LinkPageController::class, 'uploadAvatar'])
             ->middleware('throttle:api-write')
             ->name('api.v1.link-page.avatar');
+        Route::delete('/link-page/avatar', [LinkPageController::class, 'deleteAvatar'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.avatar.destroy');
         Route::post('/link-page/cover', [LinkPageController::class, 'uploadCover'])
             ->middleware('throttle:api-write')
             ->name('api.v1.link-page.cover');
+        Route::delete('/link-page/cover', [LinkPageController::class, 'deleteCover'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.link-page.cover.destroy');
         Route::get('/link-page/links', [LinkPageLinkController::class, 'index'])
             ->name('api.v1.link-page.links.index');
         Route::post('/link-page/links', [LinkPageLinkController::class, 'store'])

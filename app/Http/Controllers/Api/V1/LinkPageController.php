@@ -46,6 +46,27 @@ final class LinkPageController extends Controller
         return $this->storeImage($request, $uploads, 'cover_path', 'cover', 'link_cover');
     }
 
+    public function deleteAvatar(Request $request): JsonResponse
+    {
+        return $this->clearImage($request, 'avatar_path');
+    }
+
+    public function deleteCover(Request $request): JsonResponse
+    {
+        return $this->clearImage($request, 'cover_path');
+    }
+
+    private function clearImage(Request $request, string $column): JsonResponse
+    {
+        $page = $this->resolvePage($request->user());
+        $page->update([$column => null]);
+        $page->load('links');
+
+        return response()->json([
+            'data' => new LinkPageResource($page),
+        ]);
+    }
+
     private function storeImage(Request $request, UploadManager $uploads, string $column, string $field, string $type): JsonResponse
     {
         $request->validate([
