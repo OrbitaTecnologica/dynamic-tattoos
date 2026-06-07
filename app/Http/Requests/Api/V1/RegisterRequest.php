@@ -25,6 +25,9 @@ final class RegisterRequest extends FormRequest
             'password' => ['required', 'confirmed', Password::defaults()],
             'device_name' => ['nullable', 'string', 'max:100'],
             'referral_code' => ['nullable', 'string', 'max:32'],
+            // Slug del plan elegido en el landing (opcional). El gratis se asigna
+            // en el registro; el de pago se confirma vía checkout/webhook.
+            'plan' => ['nullable', 'string', 'max:100'],
         ];
     }
 }
