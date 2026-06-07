@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Me;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\WithdrawRequest;
+use App\Models\CommissionWithdrawal;
 use App\Models\Referral;
 use App\Models\User;
 use App\Services\Referrals\ReferralService;
@@ -33,6 +35,14 @@ final class ReferralController extends Controller
                 'share_url' => $shareUrl,
                 'qr_svg' => (string) QrCodeGenerator::format('svg')->size(240)->margin(1)->generate($shareUrl),
                 'reward_per_referral' => (float) config('billing.referral_reward', 0),
+                'can_withdraw' => $user->canWithdrawCommissions(),
+                'withdrawable' => round($user->withdrawableCents() / 100, 2),
+                'withdrawals' => $user->commissionWithdrawals()->latest()->get()->map(fn (CommissionWithdrawal $w): array => [
+                    'id' => $w->id,
+                    'amount' => round($w->amount_cents / 100, 2),
+                    'status' => $w->status,
+                    'date' => $w->created_at?->toIso8601String(),
+                ])->all(),
                 'stats' => [
                     'visits' => $user->referralVisits()->count(),
                     'registered' => $made->count(),
@@ -49,6 +59,33 @@ final class ReferralController extends Controller
                 ])->all(),
             ],
         ]);
+    }
+
+    public function withdraw(WithdrawRequest $request): JsonResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        abort_unless($user->hasReferralPlan(), 403, 'Tu plan no participa del programa de referidos.');
+        abort_unless($user->canWithdrawCommissions(), 403, 'Tu plan no permite retirar comisiones en efectivo.');
+
+        $amountCents = (int) round(((float) $request->validated()['amount']) * 100);
+
+        abort_if($amountCents > $user->withdrawableCents(), 422, 'El importe supera tu saldo disponible.');
+
+        $withdrawal = $user->commissionWithdrawals()->create([
+            'amount_cents' => $amountCents,
+            'status' => CommissionWithdrawal::STATUS_REQUESTED,
+        ]);
+
+        return response()->json([
+            'data' => [
+                'id' => $withdrawal->id,
+                'amount' => round($amountCents / 100, 2),
+                'status' => $withdrawal->status,
+                'withdrawable' => round($user->withdrawableCents() / 100, 2),
+            ],
+        ], 201);
     }
 
     private function maskEmail(?string $email): ?string

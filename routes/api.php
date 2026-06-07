@@ -163,6 +163,9 @@ Route::prefix('v1')->group(function (): void {
         // Cuenta: referidos (solo plan Partner)
         Route::get('/me/referrals', [MeReferralController::class, 'index'])
             ->name('api.v1.me.referrals');
+        Route::post('/me/referrals/withdraw', [MeReferralController::class, 'withdraw'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.referrals.withdraw');
 
         // Cuenta: 2FA
         Route::post('/me/2fa/enable', [TwoFactorController::class, 'enable'])

@@ -115,6 +115,7 @@
                             ['route' => 'admin.storage-packs',  'label' => 'Storage Packs',  'icon' => 'storage'],
                             ['route' => 'admin.subscriptions',  'label' => 'Suscripciones',  'icon' => 'subscription'],
                             ['route' => 'admin.referrals',      'label' => 'Referidos',      'icon' => 'referral'],
+                            ['route' => 'admin.withdrawals',    'label' => 'Retiros',        'icon' => 'referral'],
                             ['route' => 'admin.billing-alerts', 'label' => 'Alertas Billing','icon' => 'alerts'],
                         ],
                         'Sistema' => [

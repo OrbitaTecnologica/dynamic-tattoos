@@ -22,4 +22,14 @@ return [
     | como saldo en Stripe (se descuenta de su próximo cobro).
     */
     'referral_reward' => (float) env('REFERRAL_REWARD_EUR', 5.0),
+
+    /*
+    | Slugs de planes cuyas comisiones de referido son retirables en efectivo
+    | (cash-out). Por defecto solo "empresa" (Negocio · retirable en dinero real).
+    | Sobrescribir con WITHDRAWAL_PLANS="pro,empresa" si Pro también retira.
+    */
+    'withdrawal_plans' => array_values(array_filter(array_map(
+        'trim',
+        explode(',', (string) env('WITHDRAWAL_PLANS', 'empresa')),
+    ))),
 ];

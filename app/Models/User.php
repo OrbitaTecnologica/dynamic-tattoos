@@ -141,6 +141,39 @@ final class User extends Authenticatable
         return $this->plan?->is_referral === true;
     }
 
+    public function commissionWithdrawals(): HasMany
+    {
+        return $this->hasMany(CommissionWithdrawal::class);
+    }
+
+    /** Comisiones ganadas (referidos pagados), en céntimos. */
+    public function referralEarningsCents(): int
+    {
+        return (int) $this->referralsMade()->where('status', Referral::STATUS_PAID)->sum('reward_cents');
+    }
+
+    /** Importe ya solicitado/aprobado/pagado (no cuenta lo rechazado), en céntimos. */
+    public function withdrawnCents(): int
+    {
+        return (int) $this->commissionWithdrawals()
+            ->where('status', '!=', CommissionWithdrawal::STATUS_REJECTED)
+            ->sum('amount_cents');
+    }
+
+    /** Saldo disponible para retirar = ganado − retirado, en céntimos. */
+    public function withdrawableCents(): int
+    {
+        return max(0, $this->referralEarningsCents() - $this->withdrawnCents());
+    }
+
+    /** El plan del usuario permite retirar comisiones en efectivo. */
+    public function canWithdrawCommissions(): bool
+    {
+        $slug = $this->plan?->slug;
+
+        return $slug !== null && in_array($slug, (array) config('billing.withdrawal_plans', ['empresa']), true);
+    }
+
     public function hasTwoFactorEnabled(): bool
     {
         return $this->two_factor_confirmed_at !== null;
