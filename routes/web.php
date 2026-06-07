@@ -62,6 +62,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::view('/qr-generator', 'admin.qr-generator')->name('qr-generator');
     Route::view('/scans', 'admin.scans')->name('scans');
     Route::view('/link-pages', 'admin.link-pages')->name('link-pages');
+    Route::view('/tatuadores', 'admin.tatuadores')->name('tatuadores');
 
     // Clientes
     Route::view('/users', 'admin.users')->name('users');

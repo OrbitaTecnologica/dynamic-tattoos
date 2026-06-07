@@ -102,6 +102,7 @@
                             ['route' => 'admin.qr-generator', 'label' => 'Generar QRs',  'icon' => 'generator'],
                             ['route' => 'admin.scans',        'label' => 'Monitor Scans','icon' => 'scan'],
                             ['route' => 'admin.link-pages',   'label' => 'Link Pages',   'icon' => 'link'],
+                            ['route' => 'admin.tatuadores',   'label' => 'Tatuadores',   'icon' => 'company'],
                         ],
                         'Clientes' => [
                             ['route' => 'admin.users',         'label' => 'Usuarios',       'icon' => 'users'],
