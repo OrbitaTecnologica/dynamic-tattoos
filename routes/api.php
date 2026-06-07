@@ -30,6 +30,8 @@ use App\Http\Controllers\Api\V1\StoragePackController;
 use App\Http\Controllers\Api\V1\TattooContentController;
 use App\Http\Controllers\Api\V1\TattooController;
 use App\Http\Controllers\Api\V1\TattooScanController;
+use App\Http\Controllers\Api\V1\TatuadorController;
+use App\Http\Controllers\Api\V1\TatuadorSolicitudController;
 use App\Http\Middleware\TrackTeamMemberActivity;
 use Illuminate\Support\Facades\Route;
 
@@ -51,6 +53,14 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/contact', ContactController::class)
         ->middleware('throttle:api')
         ->name('api.v1.contact');
+
+    // Red de tatuadores certificados (público): mapa + solicitud de homologación.
+    Route::get('/tatuadores', [TatuadorController::class, 'index'])
+        ->middleware('throttle:api')
+        ->name('api.v1.tatuadores.index');
+    Route::post('/tatuadores/solicitud', [TatuadorSolicitudController::class, 'store'])
+        ->middleware('throttle:api')
+        ->name('api.v1.tatuadores.solicitud');
 
     Route::middleware(['auth:sanctum', 'throttle:api', TrackTeamMemberActivity::class])->group(function (): void {
         Route::get('/auth/me', [AuthTokenController::class, 'me'])
