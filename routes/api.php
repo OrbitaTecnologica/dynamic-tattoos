@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\AuthTokenController;
 use App\Http\Controllers\Api\V1\BillingCheckoutController;
 use App\Http\Controllers\Api\V1\BillingPortalApiController;
 use App\Http\Controllers\Api\V1\BillingSubscriptionController;
+use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\LinkPageController;
 use App\Http\Controllers\Api\V1\LinkPageLinkController;
 use App\Http\Controllers\Api\V1\Me\AccountController;
@@ -45,6 +46,11 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/referrals/visit', ReferralVisitController::class)
         ->middleware('throttle:api')
         ->name('api.v1.referrals.visit');
+
+    // Formulario de contacto público.
+    Route::post('/contact', ContactController::class)
+        ->middleware('throttle:api')
+        ->name('api.v1.contact');
 
     Route::middleware(['auth:sanctum', 'throttle:api', TrackTeamMemberActivity::class])->group(function (): void {
         Route::get('/auth/me', [AuthTokenController::class, 'me'])
