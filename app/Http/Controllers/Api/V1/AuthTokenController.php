@@ -9,6 +9,7 @@ use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\EmailVerificationService;
 use App\Services\Referrals\ReferralService;
 use App\Services\TotpService;
 use Illuminate\Http\JsonResponse;
@@ -18,23 +19,28 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthTokenController extends Controller
 {
-    public function register(RegisterRequest $request, ReferralService $referrals): JsonResponse
+    public function register(RegisterRequest $request, ReferralService $referrals, EmailVerificationService $verification): JsonResponse
     {
+        $email = mb_strtolower((string) $request->input('email'));
+
+        // Email existente NO verificado (el unique solo aplica a verificados): reenvía código.
+        $existing = User::query()->where('email', $email)->first();
+        if ($existing !== null) {
+            $verification->issue($existing);
+
+            return response()->json([
+                'data' => ['requires_verification' => true, 'email' => $existing->email],
+            ], 202);
+        }
+
         $user = User::query()->create([
             'name' => trim((string) $request->input('name')),
-            'email' => mb_strtolower((string) $request->input('email')),
+            'email' => $email,
             'password' => (string) $request->input('password'),
             'role' => 'user',
         ]);
 
         $referrals->attach($user, $request->input('referral_code'));
-
-        $tokenName = (string) $request->input('device_name', 'api-token');
-        $newToken = $user->createToken($tokenName);
-        $newToken->accessToken->forceFill([
-            'ip_address' => $request->ip(),
-            'user_agent' => mb_substr((string) $request->userAgent(), 0, 512),
-        ])->save();
 
         activity('account')
             ->causedBy($user)
@@ -42,13 +48,11 @@ final class AuthTokenController extends Controller
             ->withProperties(['detail' => 'Bienvenido a Dynamic Tattoos'])
             ->log('Cuenta creada');
 
+        $verification->issue($user);
+
         return response()->json([
-            'data' => [
-                'token' => $newToken->plainTextToken,
-                'token_type' => 'Bearer',
-                'user' => new UserResource($user),
-            ],
-        ], 201);
+            'data' => ['requires_verification' => true, 'email' => $user->email],
+        ], 202);
     }
 
     /**
