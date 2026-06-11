@@ -25,9 +25,16 @@ final class AuthTokenController extends Controller
     {
         $email = mb_strtolower((string) $request->input('email'));
 
-        // Email existente NO verificado (el unique solo aplica a verificados): reenvía código.
+        // Email existente NO verificado (el unique solo aplica a verificados): actualiza
+        // nombre/contraseña con los datos del nuevo intento y reenvía el código. Es seguro
+        // porque no se emite token hasta verificar y el OTP solo llega al dueño del buzón.
         $existing = User::query()->where('email', $email)->first();
         if ($existing !== null) {
+            $existing->update([
+                'name' => trim((string) $request->input('name')),
+                'password' => (string) $request->input('password'),
+            ]);
+
             $verification->issue($existing);
 
             return response()->json([

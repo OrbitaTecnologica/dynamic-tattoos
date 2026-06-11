@@ -67,6 +67,27 @@ final class RegisterApiTest extends TestCase
         Mail::assertSent(EmailVerificationCodeMail::class);
     }
 
+    public function test_reregister_of_unverified_email_updates_name_and_password(): void
+    {
+        Mail::fake();
+        $user = User::factory()->unverified()->create([
+            'email' => 'pending@example.com',
+            'name' => 'Nombre Viejo',
+            'password' => 'OldSecret123!',
+        ]);
+
+        $this->postJson('/api/v1/auth/register', [
+            'name' => 'Nombre Nuevo',
+            'email' => 'pending@example.com',
+            'password' => 'NewSecret123!',
+            'password_confirmation' => 'NewSecret123!',
+        ])->assertStatus(202);
+
+        $user->refresh();
+        $this->assertSame('Nombre Nuevo', $user->name);
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('NewSecret123!', (string) $user->password));
+    }
+
     public function test_registration_requires_matching_password_confirmation(): void
     {
         $this->postJson('/api/v1/auth/register', [
