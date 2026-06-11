@@ -7,6 +7,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Requests\Api\V1\RegisterRequest;
+use App\Http\Requests\Api\V1\ResendCodeRequest;
+use App\Http\Requests\Api\V1\VerifyEmailRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
 use App\Services\EmailVerificationService;
@@ -52,6 +54,60 @@ final class AuthTokenController extends Controller
 
         return response()->json([
             'data' => ['requires_verification' => true, 'email' => $user->email],
+        ], 202);
+    }
+
+    /**
+     * @throws ValidationException
+     */
+    public function verifyEmail(VerifyEmailRequest $request, EmailVerificationService $verification): JsonResponse
+    {
+        $email = mb_strtolower((string) $request->input('email'));
+        $user = User::query()->where('email', $email)->first();
+
+        if ($user === null || $user->hasVerifiedEmail() || ! $verification->verify($user, (string) $request->input('code'))) {
+            throw ValidationException::withMessages([
+                'code' => 'El código no es válido o ha expirado.',
+            ]);
+        }
+
+        $tokenName = (string) $request->input('device_name', 'api-token');
+        $newToken = $user->createToken($tokenName);
+        $newToken->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 512),
+        ])->save();
+
+        activity('security')
+            ->causedBy($user)
+            ->event('email_verified')
+            ->log('Email verificado');
+
+        return response()->json([
+            'data' => [
+                'token' => $newToken->plainTextToken,
+                'token_type' => 'Bearer',
+                'user' => new UserResource($user),
+            ],
+        ], 201);
+    }
+
+    public function resendEmailCode(ResendCodeRequest $request, EmailVerificationService $verification): JsonResponse
+    {
+        $email = mb_strtolower((string) $request->input('email'));
+        $user = User::query()->where('email', $email)->first();
+
+        if ($user !== null && ! $user->hasVerifiedEmail() && ! $verification->issue($user)) {
+            return response()->json([
+                'error' => [
+                    'code' => 'resend_cooldown',
+                    'message' => 'Espera unos segundos antes de pedir otro código.',
+                ],
+            ], 429);
+        }
+
+        return response()->json([
+            'data' => ['requires_verification' => true, 'email' => $email],
         ], 202);
     }
 

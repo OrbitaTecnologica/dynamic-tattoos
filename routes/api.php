@@ -41,6 +41,14 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:api-auth')
         ->name('api.v1.auth.login');
 
+    Route::post('/auth/email/verify', [AuthTokenController::class, 'verifyEmail'])
+        ->middleware('throttle:api-auth')
+        ->name('api.v1.auth.email.verify');
+
+    Route::post('/auth/email/resend', [AuthTokenController::class, 'resendEmailCode'])
+        ->middleware('throttle:api-auth')
+        ->name('api.v1.auth.email.resend');
+
     // Visita/escaneo del QR de referidos (público).
     Route::post('/referrals/visit', ReferralVisitController::class)
         ->middleware('throttle:api')
