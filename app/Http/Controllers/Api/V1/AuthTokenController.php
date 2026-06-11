@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Requests\Api\V1\ResendCodeRequest;
 use App\Http\Requests\Api\V1\VerifyEmailRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Models\Plan;
 use App\Models\User;
 use App\Services\EmailVerificationService;
 use App\Services\Referrals\ReferralService;
@@ -50,6 +51,17 @@ final class AuthTokenController extends Controller
         ]);
 
         $referrals->attach($user, $request->input('referral_code'));
+
+        // Plan elegido en el landing. Solo asignamos aquí los planes GRATIS
+        // (p.ej. Embajador); los de pago los fija el webhook de Stripe tras el
+        // checkout, no el registro.
+        $planSlug = $request->input('plan');
+        if (is_string($planSlug) && $planSlug !== '') {
+            $plan = Plan::query()->active()->where('slug', $planSlug)->first();
+            if ($plan !== null && (float) $plan->price === 0.0) {
+                $user->forceFill(['plan_id' => $plan->id])->save();
+            }
+        }
 
         activity('account')
             ->causedBy($user)

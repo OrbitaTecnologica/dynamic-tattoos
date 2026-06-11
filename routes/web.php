@@ -62,6 +62,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::view('/qr-generator', 'admin.qr-generator')->name('qr-generator');
     Route::view('/scans', 'admin.scans')->name('scans');
     Route::view('/link-pages', 'admin.link-pages')->name('link-pages');
+    Route::view('/tatuadores', 'admin.tatuadores')->name('tatuadores');
 
     // Clientes
     Route::view('/users', 'admin.users')->name('users');
@@ -74,6 +75,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::view('/storage-packs', 'admin.storage-packs')->name('storage-packs');
     Route::view('/subscriptions', 'admin.subscriptions')->name('subscriptions');
     Route::view('/referrals', 'admin.referrals')->name('referrals');
+    Route::view('/withdrawals', 'admin.withdrawals')->name('withdrawals');
     Route::view('/billing-alerts', 'admin.billing-alerts')->name('billing-alerts');
 
     // Sistema

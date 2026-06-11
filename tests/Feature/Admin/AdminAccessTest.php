@@ -17,9 +17,9 @@ final class AdminAccessTest extends TestCase
     {
         return [
             'admin.dashboard',
-            'admin.tattoos', 'admin.qr-generator', 'admin.scans', 'admin.link-pages',
+            'admin.tattoos', 'admin.qr-generator', 'admin.scans', 'admin.link-pages', 'admin.tatuadores',
             'admin.users', 'admin.companies', 'admin.team-members', 'admin.storage-usage',
-            'admin.pricing', 'admin.storage-packs', 'admin.subscriptions', 'admin.referrals', 'admin.billing-alerts',
+            'admin.pricing', 'admin.storage-packs', 'admin.subscriptions', 'admin.referrals', 'admin.withdrawals', 'admin.billing-alerts',
             'admin.activity-log', 'admin.api-tokens', 'admin.account',
         ];
     }

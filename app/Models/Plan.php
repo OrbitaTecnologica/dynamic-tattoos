@@ -68,4 +68,23 @@ final class Plan extends Model
     {
         return $query->orderBy('sort_order')->orderBy('price');
     }
+
+    // -------------------------------------------------------------------------
+    // Route binding
+    // -------------------------------------------------------------------------
+
+    /**
+     * Permite resolver {plan} por id (numérico) o por slug. Así el panel de
+     * cuenta puede seguir usando el id y el landing puede usar el slug.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        return $this->newQuery()
+            ->when(
+                is_numeric($value),
+                static fn (Builder $query): Builder => $query->where('id', (int) $value),
+                static fn (Builder $query): Builder => $query->where('slug', (string) $value),
+            )
+            ->first();
+    }
 }

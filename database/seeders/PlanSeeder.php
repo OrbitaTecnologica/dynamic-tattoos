@@ -11,71 +11,104 @@ final class PlanSeeder extends Seeder
 {
     public function run(): void
     {
+        // Modelo oficial v2: 5 niveles con comisiones de referido (€/alta que paga).
+        // Precios anuales. La comisión vive en `referral_reward`; todos los planes
+        // participan del programa de referidos (is_referral). Pro es el destacado.
+        // Nota: max_tattoos y storage_mb son valores de producto a confirmar.
         $plans = [
             [
-                'slug' => 'basico',
-                'name' => 'Básico',
-                'price' => 4.90,
+                'slug' => 'embajador',
+                'name' => 'Embajador',
+                'price' => 0,
                 'billing_cycle' => 'yearly',
                 'max_tattoos' => 1,
-                'storage_mb' => 100,
+                'storage_mb' => 0,
+                'referral_reward' => 5.00,
+                'is_referral' => true,
+                'is_featured' => false,
                 'sort_order' => 1,
                 'features' => [
-                    'QR único + ID permanente',
-                    'Redirección ilimitada a URL externa',
-                    'Imagen estática alojada (1 archivo)',
-                    'Panel web de gestión',
-                    'Estadísticas básicas de escaneo',
+                    'Panel de control intuitivo',
+                    'Seguimiento de tus recomendaciones',
+                    'Acumula ganancias y sube de nivel automáticamente',
+                    'Gana 5 € por cada recomendación que se haga cliente',
                 ],
             ],
             [
-                'slug' => 'premium',
-                'name' => 'Premium',
-                'price' => 9.90,
+                'slug' => 'start',
+                'name' => 'Start',
+                'price' => 35,
+                'billing_cycle' => 'yearly',
+                'max_tattoos' => 1,
+                'storage_mb' => 300,
+                'referral_reward' => 7.50,
+                'is_referral' => true,
+                'is_featured' => false,
+                'sort_order' => 2,
+                'features' => [
+                    'Todo lo del plan Embajador',
+                    'Hasta 300 Mb en fotos Full HD',
+                    'Redirección a la URL que quieras',
+                    'Estadísticas básicas de escaneo',
+                    'Gana 7,50 € por cada recomendación',
+                ],
+            ],
+            [
+                'slug' => 'plus',
+                'name' => 'Plus',
+                'price' => 55,
+                'billing_cycle' => 'yearly',
+                'max_tattoos' => 1,
+                'storage_mb' => 500,
+                'referral_reward' => 10.00,
+                'is_referral' => true,
+                'is_featured' => false,
+                'sort_order' => 3,
+                'features' => [
+                    'Todo lo del plan Start',
+                    'Hasta 500 Mb en videos Full HD',
+                    'Redirección a la URL que quieras',
+                    'Estadísticas básicas de escaneo',
+                    'Gana 10,00 € por cada recomendación',
+                ],
+            ],
+            [
+                'slug' => 'pro',
+                'name' => 'Pro',
+                'price' => 65,
                 'billing_cycle' => 'yearly',
                 'max_tattoos' => 5,
-                'storage_mb' => 500,
-                'sort_order' => 2,
+                'storage_mb' => 1000,
+                'referral_reward' => 12.50,
+                'is_referral' => true,
                 'is_featured' => true,
+                'sort_order' => 4,
                 'features' => [
-                    'Todo lo del plan Básico',
-                    'Hasta 5 videos alojados (Full HD)',
-                    'Reproductor sin marca',
-                    'Programación de cambios por fecha',
-                    'Soporte prioritario',
+                    'Todo lo del plan Plus',
+                    'Hasta 1 Gb en archivos',
+                    'Estadísticas avanzadas de escaneo',
+                    'Enlaces tipo Linktree integrados',
+                    'Opciones profesionales para tu presencia online',
+                    'Gana 12,50 € por cada recomendación',
                 ],
             ],
             [
-                'slug' => 'premium-top',
-                'name' => 'Premium Top',
-                'price' => 19.90,
+                'slug' => 'empresa',
+                'name' => 'Negocio',
+                'price' => 100,
                 'billing_cycle' => 'yearly',
                 'max_tattoos' => 99,
                 'storage_mb' => 5000,
-                'sort_order' => 3,
-                'features' => [
-                    'Todo lo del plan Premium',
-                    'Página de perfil personalizada (feed)',
-                    'Galería ilimitada · video + foto',
-                    'Enlaces tipo Linktree integrados',
-                    'Dominio propio opcional',
-                    'Acceso anticipado a 3×3 cm',
-                ],
-            ],
-            [
-                'slug' => 'partner',
-                'name' => 'Partner',
-                'price' => 29.90,
-                'billing_cycle' => 'yearly',
-                'max_tattoos' => 99,
-                'storage_mb' => 10000,
-                'sort_order' => 4,
+                'referral_reward' => 15.00,
                 'is_referral' => true,
+                'is_featured' => false,
+                'sort_order' => 5,
                 'features' => [
-                    'Todo lo del plan Premium Top',
-                    'QR de referidos para tu tienda',
-                    'Recompensa por cada alta que pague',
-                    'Panel de monitorización de referidos',
+                    'Todo lo del plan Pro',
+                    'Primer año GRATIS (promoción limitada)',
+                    'Gana 15 € por cliente, retirable en dinero real',
+                    'Diseñado para escalar, vender y generar ingresos constantes',
+                    'Ideal para creadores y profesionales que quieren destacar',
                 ],
             ],
         ];
@@ -86,5 +119,12 @@ final class PlanSeeder extends Seeder
                 $plan + ['is_active' => true],
             );
         }
+
+        // Planes del modelo viejo que sigan en la BD: se desactivan (no se borran,
+        // por si hay usuarios con plan_id apuntando a ellos) para que no aparezcan
+        // en GET /plans.
+        Plan::query()
+            ->whereNotIn('slug', array_column($plans, 'slug'))
+            ->update(['is_active' => false]);
     }
 }
