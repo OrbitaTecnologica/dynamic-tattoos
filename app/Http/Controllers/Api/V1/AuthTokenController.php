@@ -114,7 +114,7 @@ final class AuthTokenController extends Controller
     /**
      * @throws ValidationException
      */
-    public function store(LoginRequest $request, TotpService $totp): JsonResponse
+    public function store(LoginRequest $request, TotpService $totp, EmailVerificationService $verification): JsonResponse
     {
         $email = mb_strtolower((string) $request->input('email'));
 
@@ -126,6 +126,18 @@ final class AuthTokenController extends Controller
             throw ValidationException::withMessages([
                 'email' => __('auth.failed'),
             ]);
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $verification->issue($user); // respeta cooldown
+
+            return response()->json([
+                'error' => [
+                    'code' => 'email_not_verified',
+                    'message' => 'Debes verificar tu correo antes de iniciar sesión.',
+                    'email' => $user->email,
+                ],
+            ], 403);
         }
 
         if ($user->hasTwoFactorEnabled()) {
