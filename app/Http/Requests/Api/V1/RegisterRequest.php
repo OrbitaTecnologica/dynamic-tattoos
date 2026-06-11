@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Requests\Api\V1;
 
+use App\Rules\ValidCaptcha;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
 final class RegisterRequest extends FormRequest
@@ -21,10 +23,14 @@ final class RegisterRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
+            'email' => [
+                'required', 'string', 'email', 'max:255',
+                Rule::unique('users', 'email')->whereNotNull('email_verified_at'),
+            ],
             'password' => ['required', 'confirmed', Password::defaults()],
             'device_name' => ['nullable', 'string', 'max:100'],
             'referral_code' => ['nullable', 'string', 'max:32'],
+            'captcha_token' => ['nullable', new ValidCaptcha()],
         ];
     }
 }
