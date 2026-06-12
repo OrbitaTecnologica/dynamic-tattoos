@@ -31,8 +31,8 @@ final class PublicTattooResource extends JsonResource
 
         return [
             'short_code' => $this->resource->short_code,
+            'status'     => 'active',
             'title'      => $this->resource->name,
-            'notes'      => $content->payload['title'] ?? null,
             'destType'   => $this->mapDestType($content),
             'photos'     => $this->buildPhotos($content),
             'video'      => $this->buildVideo($content),

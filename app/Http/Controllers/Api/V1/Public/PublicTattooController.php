@@ -35,12 +35,29 @@ final class PublicTattooController extends Controller
             self::CACHE_TTL_SECONDS,
             static function () use ($shortCode, $request): ?array {
                 $tattoo = Tattoo::query()
-                    ->active()
                     ->byShortCode($shortCode)
                     ->with(['activeContent'])
                     ->first();
 
-                if ($tattoo === null || $tattoo->activeContent === null) {
+                if ($tattoo === null) {
+                    return null;
+                }
+
+                // El propietario ha pausado el QR: respondemos 200 con un payload
+                // mínimo para que el SPA pueda mostrar un mensaje específico
+                // ("QR pausado") en lugar del genérico "no encontrado".
+                if (! $tattoo->is_active) {
+                    return [
+                        'short_code' => $tattoo->short_code,
+                        'status'     => 'paused',
+                        'title'      => $tattoo->name,
+                        'destType'   => null,
+                        'photos'     => [],
+                        'video'      => null,
+                    ];
+                }
+
+                if ($tattoo->activeContent === null) {
                     return null;
                 }
 
