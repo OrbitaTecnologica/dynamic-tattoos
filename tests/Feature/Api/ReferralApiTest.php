@@ -39,7 +39,7 @@ final class ReferralApiTest extends TestCase
             'password' => 'Secret123!',
             'password_confirmation' => 'Secret123!',
             'referral_code' => 'ABC12345',
-        ])->assertCreated();
+        ])->assertStatus(202); // registro Enfoque A: sin token hasta verificar email
 
         $referred = User::query()->where('email', 'nuevo@example.com')->firstOrFail();
 

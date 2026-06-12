@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
-final class User extends Authenticatable
+final class User extends Authenticatable implements MustVerifyEmail
 {
     use Billable;
     use HasApiTokens;
@@ -40,6 +41,8 @@ final class User extends Authenticatable
         'plan_id',
         'plan_expires_at',
         'is_premium',
+        'ambassador_tier_id',
+        'ambassador_slug',
     ];
 
     protected $hidden = [
@@ -135,6 +138,17 @@ final class User extends Authenticatable
         return $this->belongsTo(User::class, 'referred_by');
     }
 
+    public function tier(): BelongsTo
+    {
+        return $this->belongsTo(AmbassadorTier::class, 'ambassador_tier_id');
+    }
+
+    /** Cuenta de referidos cuyo plan se ha pagado (estado `paid`). */
+    public function successfulReferralsCount(): int
+    {
+        return $this->referralsMade()->where('status', Referral::STATUS_PAID)->count();
+    }
+
     /** El plan actual del usuario incluye la función de referidos/monitorización. */
     public function hasReferralPlan(): bool
     {
@@ -212,6 +226,11 @@ final class User extends Authenticatable
     public function isArtist(): bool
     {
         return $this->role === 'artist';
+    }
+
+    public function isAmbassador(): bool
+    {
+        return $this->role === 'ambassador';
     }
 
     public function hasActivePlan(): bool

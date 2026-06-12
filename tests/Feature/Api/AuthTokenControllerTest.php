@@ -83,4 +83,24 @@ final class AuthTokenControllerTest extends TestCase
             'id' => $token->accessToken->id,
         ]);
     }
+
+    public function test_login_blocked_for_unverified_user(): void
+    {
+        \Illuminate\Support\Facades\Mail::fake();
+        User::factory()->unverified()->create([
+            'email' => 'pending@example.com',
+            'password' => 'password',
+        ]);
+
+        $this->postJson('/api/v1/auth/login', [
+            'email' => 'pending@example.com',
+            'password' => 'password',
+            'device_name' => 'test-suite',
+        ])
+            ->assertStatus(403)
+            ->assertJsonPath('error.code', 'email_not_verified')
+            ->assertJsonPath('error.email', 'pending@example.com');
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
 }

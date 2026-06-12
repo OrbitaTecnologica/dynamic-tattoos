@@ -26,6 +26,8 @@ final class Plan extends Model
         'is_featured',
         'is_referral',
         'referral_reward',
+        'payout_mode',
+        'allowed_roles',
         'sort_order',
     ];
 
@@ -38,6 +40,7 @@ final class Plan extends Model
             'is_featured' => 'boolean',
             'is_referral' => 'boolean',
             'referral_reward' => 'decimal:2',
+            'allowed_roles' => 'array',
             'max_tattoos' => 'integer',
             'storage_mb' => 'integer',
             'sort_order' => 'integer',

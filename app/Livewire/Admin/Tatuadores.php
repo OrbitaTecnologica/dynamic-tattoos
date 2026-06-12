@@ -4,9 +4,15 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin;
 
+use App\Mail\TatuadorApprovedMail;
 use App\Models\Tatuador;
 use App\Models\TatuadorSolicitud;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -173,6 +179,54 @@ final class Tatuadores extends Component
     {
         TatuadorSolicitud::whereKey($id)->update(['status' => TatuadorSolicitud::STATUS_REJECTED]);
         $this->dispatch('toast', message: 'Solicitud rechazada.', type: 'warning');
+    }
+
+    /**
+     * Aprueba la solicitud: crea (o promueve) el User con role=artist, envía
+     * email con link de reset password y marca la solicitud aprobada. No añade
+     * automáticamente la entrada al mapa — eso lo hace `certifySolicitud`.
+     */
+    public function approveSolicitud(int $id): void
+    {
+        $solicitud = TatuadorSolicitud::findOrFail($id);
+
+        if ($solicitud->status !== TatuadorSolicitud::STATUS_PENDING) {
+            $this->dispatch('toast', message: 'La solicitud ya fue procesada.', type: 'warning');
+
+            return;
+        }
+
+        $email = mb_strtolower((string) $solicitud->email);
+        $user = User::query()->where('email', $email)->first();
+
+        if ($user === null) {
+            $user = User::query()->create([
+                'name' => (string) $solicitud->name,
+                'email' => $email,
+                'password' => Hash::make(Str::random(64)),
+                'role' => 'artist',
+            ]);
+        } else {
+            $user->forceFill(['role' => 'artist'])->save();
+        }
+
+        $solicitud->forceFill([
+            'status' => TatuadorSolicitud::STATUS_APPROVED,
+            'approved_at' => now(),
+            'user_id' => $user->id,
+        ])->save();
+
+        $token = Password::broker()->createToken($user);
+        Mail::to($user->email)->send(new TatuadorApprovedMail($user, $token));
+
+        activity('account')
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->event('tatuador_approved')
+            ->withProperties(['solicitud_id' => $solicitud->id])
+            ->log('Tatuador aprobado');
+
+        $this->dispatch('toast', message: 'Solicitud aprobada y email enviado.', type: 'success');
     }
 
     public function render(): View

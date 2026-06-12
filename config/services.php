@@ -44,4 +44,16 @@ return [
         ],
     ],
 
+    // SPA cliente. Cuando está definido, los scans de QR cuyo contenido sea
+    // galería o vídeo subido se redirigen aquí para mostrar la vista con marca
+    // del frontend en lugar del fallback Livewire del backend.
+    'frontend' => [
+        'url' => env('FRONTEND_URL'),
+    ],
+
+    'turnstile' => [
+        'secret' => env('TURNSTILE_SECRET_KEY'),
+        'verify_url' => 'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+    ],
+
 ];
