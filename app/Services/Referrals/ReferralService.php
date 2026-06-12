@@ -85,10 +85,18 @@ final class ReferralService
 
         $referrer = $referral->referrer;
 
-        // Importe: la recompensa propia del plan del referente si la define;
+        // Importe base: la recompensa propia del plan del referente si la define;
         // si no, el valor global de config('billing.referral_reward').
-        $rewardEuros = $referrer?->plan?->referral_reward ?? config('billing.referral_reward', 0);
-        $rewardCents = (int) round(((float) $rewardEuros) * 100);
+        $baseEuros = $referrer?->plan?->referral_reward ?? config('billing.referral_reward', 0);
+
+        // Multiplicador por tier: solo aplica a embajadores. Tatuadores reciben
+        // siempre la comisión base de su plan.
+        $multiplier = ($referrer?->role === 'ambassador')
+            ? (float) ($referrer?->tier?->commission_multiplier ?? 1.0)
+            : 1.0;
+
+        $rewardEuros = (float) $baseEuros * $multiplier;
+        $rewardCents = (int) round($rewardEuros * 100);
 
         if ($referrer !== null && $rewardCents > 0) {
             try {
@@ -111,5 +119,10 @@ final class ReferralService
             'reward_cents' => $rewardCents,
             'credited_at' => now(),
         ])->save();
+
+        // Si el referente es Embajador, puede que este pago lo promueva de tier.
+        if ($referrer !== null && $referrer->isAmbassador()) {
+            app(AmbassadorTierService::class)->recompute($referrer);
+        }
     }
 }

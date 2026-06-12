@@ -24,6 +24,11 @@
                             <p class="text-sm text-gray-300">{{ $sol->message }}</p>
                         @endif
                         <div class="flex items-center gap-3 pt-1 text-xs">
+                            <button wire:click="approveSolicitud({{ $sol->id }})"
+                                    wire:confirm="¿Aprobar y crear cuenta de tatuador? Se enviará email con link para definir contraseña."
+                                    class="rounded-lg bg-sky-950/60 px-3 py-1.5 font-semibold text-sky-300 ring-1 ring-sky-500/20 transition hover:bg-sky-900/60">
+                                ✓ Aprobar (crear cuenta)
+                            </button>
                             <button wire:click="certifySolicitud({{ $sol->id }})"
                                     class="rounded-lg bg-emerald-950/60 px-3 py-1.5 font-semibold text-emerald-300 ring-1 ring-emerald-500/20 transition hover:bg-emerald-900/60">
                                 ✓ Certificar y añadir al mapa

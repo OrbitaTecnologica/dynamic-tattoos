@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\TatuadorApprovalController;
 use App\Http\Controllers\Api\V1\AuthTokenController;
 use App\Http\Controllers\Api\V1\BillingCheckoutController;
 use App\Http\Controllers\Api\V1\BillingPortalApiController;
@@ -10,6 +11,7 @@ use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\LinkPageController;
 use App\Http\Controllers\Api\V1\LinkPageLinkController;
 use App\Http\Controllers\Api\V1\Me\AccountController;
+use App\Http\Controllers\Api\V1\Me\AmbassadorController as MeAmbassadorController;
 use App\Http\Controllers\Api\V1\Me\ActivityController;
 use App\Http\Controllers\Api\V1\Me\BillingController as MeBillingController;
 use App\Http\Controllers\Api\V1\Me\CompanyController;
@@ -175,6 +177,13 @@ Route::prefix('v1')->group(function (): void {
             ->middleware('throttle:api-write')
             ->name('api.v1.me.referrals.withdraw');
 
+        // Cuenta: panel embajador (rol ambassador)
+        Route::get('/me/ambassador/summary', [MeAmbassadorController::class, 'summary'])
+            ->name('api.v1.me.ambassador.summary');
+        Route::patch('/me/ambassador/slug', [MeAmbassadorController::class, 'updateSlug'])
+            ->middleware('throttle:3,43200') // 3 cambios cada 30 días (43200 min)
+            ->name('api.v1.me.ambassador.slug');
+
         // Cuenta: 2FA
         Route::post('/me/2fa/enable', [TwoFactorController::class, 'enable'])
             ->middleware('throttle:api-write')
@@ -260,6 +269,11 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/link-page/links/{link}', [LinkPageLinkController::class, 'destroy'])
             ->middleware('throttle:api-write')
             ->name('api.v1.link-page.links.destroy');
+
+        // Admin: aprobación de solicitudes de tatuadores
+        Route::post('/admin/tatuadores/solicitudes/{solicitud}/aprobar', [TatuadorApprovalController::class, 'approve'])
+            ->middleware(['admin', 'throttle:api-write'])
+            ->name('api.v1.admin.tatuadores.solicitudes.aprobar');
 
         Route::get('/admin/plans', [PlanController::class, 'adminIndex'])
             ->name('api.v1.admin.plans.index');

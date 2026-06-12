@@ -29,6 +29,9 @@ final class RegisterRequest extends FormRequest
             ],
             'password' => ['required', 'confirmed', Password::defaults()],
             'device_name' => ['nullable', 'string', 'max:100'],
+            // Rol con el que se registra. El rol `artist` no se asigna aquí: pasa
+            // por el flujo separado de TatuadorSolicitud + aprobación admin.
+            'role' => ['nullable', 'string', 'in:user,ambassador'],
             'referral_code' => ['nullable', 'string', 'max:32'],
             // Slug del plan elegido en el landing (opcional). El gratis se asigna
             // en el registro; el de pago se confirma vía checkout/webhook.

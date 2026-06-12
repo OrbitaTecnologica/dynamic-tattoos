@@ -41,6 +41,8 @@ final class User extends Authenticatable implements MustVerifyEmail
         'plan_id',
         'plan_expires_at',
         'is_premium',
+        'ambassador_tier_id',
+        'ambassador_slug',
     ];
 
     protected $hidden = [
@@ -136,6 +138,17 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsTo(User::class, 'referred_by');
     }
 
+    public function tier(): BelongsTo
+    {
+        return $this->belongsTo(AmbassadorTier::class, 'ambassador_tier_id');
+    }
+
+    /** Cuenta de referidos cuyo plan se ha pagado (estado `paid`). */
+    public function successfulReferralsCount(): int
+    {
+        return $this->referralsMade()->where('status', Referral::STATUS_PAID)->count();
+    }
+
     /** El plan actual del usuario incluye la función de referidos/monitorización. */
     public function hasReferralPlan(): bool
     {
@@ -213,6 +226,11 @@ final class User extends Authenticatable implements MustVerifyEmail
     public function isArtist(): bool
     {
         return $this->role === 'artist';
+    }
+
+    public function isAmbassador(): bool
+    {
+        return $this->role === 'ambassador';
     }
 
     public function hasActivePlan(): bool

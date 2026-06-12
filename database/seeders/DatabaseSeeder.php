@@ -16,6 +16,7 @@ final class DatabaseSeeder extends Seeder
             PlanSeeder::class,
             StoragePackSeeder::class,
             TatuadorSeeder::class,
+            AmbassadorTierSeeder::class,
         ]);
     }
 }

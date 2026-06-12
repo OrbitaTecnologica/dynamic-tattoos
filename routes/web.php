@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\HomeRedirectController;
 use App\Http\Controllers\LinkPageController;
+use App\Http\Controllers\PublicAmbassadorController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\TattooRedirectController;
 use Illuminate\Support\Facades\Route;
@@ -38,6 +39,15 @@ Route::get('/t/{shortCode}', TattooRedirectController::class)
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook'])
     ->name('cashier.webhook');
+
+/*
+|--------------------------------------------------------------------------
+| Público: landing del embajador (registra la visita y enlaza al registro)
+|--------------------------------------------------------------------------
+*/
+Route::get('/e/{slug}', [PublicAmbassadorController::class, 'show'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('ambassador.public');
 
 /*
 |--------------------------------------------------------------------------

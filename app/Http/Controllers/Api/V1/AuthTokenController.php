@@ -13,8 +13,10 @@ use App\Http\Resources\Api\V1\UserResource;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\EmailVerificationService;
+use App\Services\Referrals\AmbassadorTierService;
 use App\Services\Referrals\ReferralService;
 use App\Services\TotpService;
+use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
@@ -22,7 +24,7 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthTokenController extends Controller
 {
-    public function register(RegisterRequest $request, ReferralService $referrals, EmailVerificationService $verification): JsonResponse
+    public function register(RegisterRequest $request, ReferralService $referrals, EmailVerificationService $verification, AmbassadorTierService $tiers): JsonResponse
     {
         $email = mb_strtolower((string) $request->input('email'));
 
@@ -43,14 +45,30 @@ final class AuthTokenController extends Controller
             ], 202);
         }
 
+        $role = (string) $request->input('role', 'user');
+        if (! in_array($role, ['user', 'ambassador'], true)) {
+            $role = 'user';
+        }
+
         $user = User::query()->create([
             'name' => trim((string) $request->input('name')),
             'email' => $email,
             'password' => (string) $request->input('password'),
-            'role' => 'user',
+            'role' => $role,
         ]);
 
         $referrals->attach($user, $request->input('referral_code'));
+
+        // Setup específico de embajador: tier por defecto, slug público compartible
+        // y plan gratis Embajador si no llegó otro.
+        if ($user->role === 'ambassador') {
+            $defaultTier = $tiers->defaultTier();
+
+            $user->forceFill([
+                'ambassador_tier_id' => $defaultTier->id,
+                'ambassador_slug' => $this->generateUniqueAmbassadorSlug((string) $user->name),
+            ])->save();
+        }
 
         // Plan elegido en el landing. Solo asignamos aquí los planes GRATIS
         // (p.ej. Embajador); los de pago los fija el webhook de Stripe tras el
@@ -60,6 +78,14 @@ final class AuthTokenController extends Controller
             $plan = Plan::query()->active()->where('slug', $planSlug)->first();
             if ($plan !== null && (float) $plan->price === 0.0) {
                 $user->forceFill(['plan_id' => $plan->id])->save();
+            }
+        }
+
+        // Si es embajador y aún no tiene plan, asignar el plan gratis "embajador".
+        if ($user->role === 'ambassador' && $user->plan_id === null) {
+            $embPlan = Plan::query()->active()->where('slug', 'embajador')->first();
+            if ($embPlan !== null) {
+                $user->forceFill(['plan_id' => $embPlan->id])->save();
             }
         }
 
@@ -245,5 +271,34 @@ final class AuthTokenController extends Controller
         return response()->json([
             'message' => 'Token revoked successfully.',
         ]);
+    }
+
+    /**
+     * Slug compartible del embajador a partir del nombre, con sufijo numérico si colisiona.
+     * Evita palabras reservadas para que no choque con rutas del sitio.
+     */
+    private function generateUniqueAmbassadorSlug(string $name): string
+    {
+        $reserved = config('ambassador.reserved_slugs', [
+            'admin', 'api', 'app', 'login', 'logout', 'register', 'reset',
+            'verify', 'me', 'cuenta', 'panel', 'embajador', 'embajadores',
+            'tatuador', 'tatuadores', 'cliente', 'clientes', 'r', 'e', 't', 'u',
+        ]);
+
+        $base = Str::slug($name) ?: 'embajador';
+        $base = mb_substr($base, 0, 40);
+
+        $candidate = $base;
+        $i = 1;
+
+        while (
+            in_array($candidate, $reserved, true) ||
+            User::query()->where('ambassador_slug', $candidate)->exists()
+        ) {
+            $candidate = $base.'-'.$i;
+            $i++;
+        }
+
+        return $candidate;
     }
 }
