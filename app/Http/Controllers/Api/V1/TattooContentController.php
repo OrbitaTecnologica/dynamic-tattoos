@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Domain\Plans\PlanFeatures;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ActivateTattooContentRequest;
 use App\Http\Resources\Api\V1\TattooContentResource;
@@ -32,19 +33,35 @@ final class TattooContentController extends Controller
     {
         $this->authorize('update', $tattoo);
 
+        $type = (string) $request->input('type');
+        $planSlug = $request->user()?->plan?->slug;
+
+        if (! PlanFeatures::planAllowsContent($planSlug, $type)) {
+            return response()->json([
+                'error' => [
+                    'code' => 'plan_upgrade_required',
+                    'message' => "Tu plan actual no permite usar el destino '{$type}'.",
+                    'status' => 403,
+                    'current_plan' => $planSlug,
+                    'required_plan' => PlanFeatures::minimumPlanForContent($type),
+                    'content_type' => $type,
+                ],
+            ], 403);
+        }
+
         $payload = $this->normalizePayload(
-            type: (string) $request->input('type'),
+            type: $type,
             payload: (array) $request->input('payload', []),
         );
 
-        $content = DB::transaction(function () use ($tattoo, $request, $payload): TattooContent {
+        $content = DB::transaction(function () use ($tattoo, $type, $payload): TattooContent {
             $tattoo->contents()->update(['is_active' => false]);
 
             /** @var int $maxOrder */
             $maxOrder = (int) $tattoo->contents()->max('order');
 
             return $tattoo->contents()->create([
-                'type' => (string) $request->input('type'),
+                'type' => $type,
                 'payload' => $payload,
                 'is_active' => true,
                 'order' => $maxOrder + 1,
