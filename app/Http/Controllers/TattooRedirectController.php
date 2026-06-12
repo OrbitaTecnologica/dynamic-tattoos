@@ -23,7 +23,10 @@ use Illuminate\View\View;
  *   3. If content is a "Link" type → 302 redirect to the external URL.
  *      A scheme whitelist (http/https) prevents open-redirect to javascript:
  *      or data: URIs (OWASP A01 / CWE-601).
- *   4. Otherwise → render tattoo/show.blade.php which mounts <livewire:tattoo-viewer>.
+ *   4. If gallery/video and the SPA frontend URL is configured → 302 redirect
+ *      to {FRONTEND_URL}/t/{shortCode} so the branded gallery view renders.
+ *   5. Otherwise (no FRONTEND_URL) → fall back to tattoo/show.blade.php which
+ *      mounts <livewire:tattoo-viewer>.
  */
 final class TattooRedirectController extends Controller
 {
@@ -47,6 +50,12 @@ final class TattooRedirectController extends Controller
 
         if ($content->isDirectRedirect()) {
             return $this->handleLinkRedirect($content);
+        }
+
+        $frontendRedirect = $this->buildFrontendRedirect($shortCode);
+
+        if ($frontendRedirect !== null) {
+            return redirect()->away($frontendRedirect, 302);
         }
 
         return view('tattoo.show', [
@@ -127,5 +136,27 @@ final class TattooRedirectController extends Controller
         }
 
         return redirect()->away($url, 302);
+    }
+
+    /**
+     * Builds the absolute URL of the SPA gallery view for this short code,
+     * or null if the frontend host is not configured. The scheme whitelist
+     * keeps us safe from operator-controlled open redirects via .env.
+     */
+    private function buildFrontendRedirect(string $shortCode): ?string
+    {
+        $base = config('services.frontend.url');
+
+        if (! is_string($base) || $base === '') {
+            return null;
+        }
+
+        $scheme = parse_url($base, PHP_URL_SCHEME);
+
+        if (! in_array($scheme, ['http', 'https'], strict: true)) {
+            return null;
+        }
+
+        return rtrim($base, '/').'/t/'.$shortCode;
     }
 }

@@ -52,6 +52,7 @@ final class TattooContentController extends Controller
         });
 
         Cache::forget("tattoo_content_{$tattoo->short_code}");
+        Cache::forget("public_tattoo_{$tattoo->short_code}");
 
         return response()->json([
             'data' => new TattooContentResource($content),

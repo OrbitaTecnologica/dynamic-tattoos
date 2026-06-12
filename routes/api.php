@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\V1\Me\StorageController;
 use App\Http\Controllers\Api\V1\Me\TeamController;
 use App\Http\Controllers\Api\V1\Me\TwoFactorController;
 use App\Http\Controllers\Api\V1\PlanController;
+use App\Http\Controllers\Api\V1\Public\PublicTattooController;
 use App\Http\Controllers\Api\V1\QrCodeController;
 use App\Http\Controllers\Api\V1\ReferralVisitController;
 use App\Http\Controllers\Api\V1\StoragePackController;
@@ -45,6 +46,12 @@ Route::prefix('v1')->group(function (): void {
     Route::post('/referrals/visit', ReferralVisitController::class)
         ->middleware('throttle:api')
         ->name('api.v1.referrals.visit');
+
+    // Contenido público de un tatuaje por short_code (consumido por la galería del SPA).
+    Route::get('/public/tattoos/{shortCode}', PublicTattooController::class)
+        ->middleware('throttle:api')
+        ->where('shortCode', '[a-zA-Z0-9]{1,12}')
+        ->name('api.v1.public.tattoos.show');
 
     Route::middleware(['auth:sanctum', 'throttle:api', TrackTeamMemberActivity::class])->group(function (): void {
         Route::get('/auth/me', [AuthTokenController::class, 'me'])
