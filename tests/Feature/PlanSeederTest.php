@@ -41,7 +41,7 @@ final class PlanSeederTest extends TestCase
             'start' => ['price' => 35.0, 'reward' => 7.5],
             'plus' => ['price' => 55.0, 'reward' => 10.0],
             'pro' => ['price' => 65.0, 'reward' => 12.5],
-            'empresa' => ['price' => 100.0, 'reward' => 15.0],
+            'empresa' => ['price' => 100.0, 'reward' => 20.0],
         ];
 
         foreach ($expected as $slug => $vals) {

@@ -72,6 +72,28 @@ final class TatuadorApiTest extends TestCase
             ->assertJsonStructure(['error' => ['errors' => ['name', 'studio_name', 'email']]]);
     }
 
+    public function test_search_q_filters_by_city(): void
+    {
+        Tatuador::factory()->create(['studio_name' => 'Ink Palace', 'artist_name' => 'Ana López', 'city' => 'Madrid', 'is_active' => true]);
+        Tatuador::factory()->create(['studio_name' => 'Ocean Tattoo', 'artist_name' => 'Pedro Mar', 'city' => 'Barcelona', 'is_active' => true]);
+
+        $this->getJson('/api/v1/tatuadores?q=madrid')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.studio_name', 'Ink Palace');
+    }
+
+    public function test_search_q_filters_by_studio_name(): void
+    {
+        Tatuador::factory()->create(['studio_name' => 'Dragon Ink Studio', 'city' => 'Sevilla', 'is_active' => true]);
+        Tatuador::factory()->create(['studio_name' => 'Royal Needles', 'city' => 'Bilbao', 'is_active' => true]);
+
+        $this->getJson('/api/v1/tatuadores?q=dragon')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.studio_name', 'Dragon Ink Studio');
+    }
+
     public function test_seeder_creates_the_five_certified_studios(): void
     {
         $this->seed(TatuadorSeeder::class);
