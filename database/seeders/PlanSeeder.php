@@ -107,7 +107,7 @@ final class PlanSeeder extends Seeder
                 'billing_cycle' => 'yearly',
                 'max_tattoos' => 99,
                 'storage_mb' => 5000,
-                'referral_reward' => 15.00,
+                'referral_reward' => 20.00,
                 'payout_mode' => 'cash',
                 'allowed_roles' => ['ambassador'],
                 'is_referral' => true,
@@ -116,7 +116,7 @@ final class PlanSeeder extends Seeder
                 'features' => [
                     'Todo lo del plan Pro',
                     'Primer año GRATIS (promoción limitada)',
-                    'Gana 15 € por cliente, retirable en dinero real',
+                    'Gana 20 € por cliente, retirable en dinero real',
                     'Diseñado para escalar, vender y generar ingresos constantes',
                     'Ideal para creadores y profesionales que quieren destacar',
                 ],
