@@ -23,6 +23,8 @@ final class PlanResource extends JsonResource
             'stripe_price_id' => $this->stripe_price_id,
             'features' => $this->features,
             'max_tattoos' => $this->max_tattoos,
+            'storage_mb' => (int) $this->storage_mb,
+            'referral_reward' => (float) $this->referral_reward,
             'is_active' => $this->is_active,
             'is_featured' => (bool) $this->is_featured,
             'is_referral' => (bool) $this->is_referral,

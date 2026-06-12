@@ -31,6 +31,7 @@ use App\Http\Controllers\Api\V1\QrCodeController;
 use App\Http\Controllers\Api\V1\ReferralVisitController;
 use App\Http\Controllers\Api\V1\StoragePackController;
 use App\Http\Controllers\Api\V1\TattooContentController;
+use App\Http\Controllers\Api\V1\TattooContentUploadController;
 use App\Http\Controllers\Api\V1\TattooController;
 use App\Http\Controllers\Api\V1\TattooScanController;
 use App\Http\Controllers\Api\V1\TatuadorController;
@@ -124,6 +125,9 @@ Route::prefix('v1')->group(function (): void {
         Route::post('/tattoos/{tattoo}/contents/activate', [TattooContentController::class, 'activate'])
             ->middleware('throttle:api-write')
             ->name('api.v1.tattoos.contents.activate');
+        Route::post('/tattoos/{tattoo}/contents/upload', TattooContentUploadController::class)
+            ->middleware('throttle:api-write')
+            ->name('api.v1.tattoos.contents.upload');
 
         Route::get('/tattoos/{tattoo}/scans', [TattooScanController::class, 'index'])
             ->name('api.v1.tattoos.scans.index');
