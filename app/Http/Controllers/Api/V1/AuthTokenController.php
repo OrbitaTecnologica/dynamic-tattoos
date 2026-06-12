@@ -45,9 +45,17 @@ final class AuthTokenController extends Controller
             ], 202);
         }
 
-        $role = (string) $request->input('role', 'user');
+        // Plan elegido en el landing (opcional). Su allowed_roles determina el rol
+        // cuando no llega uno explícito: elegir el plan Embajador/Empresa ES darse
+        // de alta como embajador.
+        $planSlug = $request->input('plan');
+        $plan = is_string($planSlug) && $planSlug !== ''
+            ? Plan::query()->active()->where('slug', $planSlug)->first()
+            : null;
+
+        $role = (string) $request->input('role', '');
         if (! in_array($role, ['user', 'ambassador'], true)) {
-            $role = 'user';
+            $role = in_array('ambassador', $plan->allowed_roles ?? [], true) ? 'ambassador' : 'user';
         }
 
         $user = User::query()->create([
@@ -70,15 +78,13 @@ final class AuthTokenController extends Controller
             ])->save();
         }
 
-        // Plan elegido en el landing. Solo asignamos aquí los planes GRATIS
-        // (p.ej. Embajador); los de pago los fija el webhook de Stripe tras el
-        // checkout, no el registro.
-        $planSlug = $request->input('plan');
-        if (is_string($planSlug) && $planSlug !== '') {
-            $plan = Plan::query()->active()->where('slug', $planSlug)->first();
-            if ($plan !== null && (float) $plan->price === 0.0) {
-                $user->forceFill(['plan_id' => $plan->id])->save();
-            }
+        // Solo asignamos aquí los planes GRATIS (p.ej. Embajador) y solo si el plan
+        // admite el rol del usuario; los de pago los fija el webhook de Stripe tras
+        // el checkout, no el registro.
+        if ($plan !== null
+            && (float) $plan->price === 0.0
+            && ($plan->allowed_roles === null || in_array($user->role, $plan->allowed_roles, true))) {
+            $user->forceFill(['plan_id' => $plan->id])->save();
         }
 
         // Si es embajador y aún no tiene plan, asignar el plan gratis "embajador".

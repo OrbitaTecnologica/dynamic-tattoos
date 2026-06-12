@@ -6,6 +6,7 @@ namespace Tests\Feature\Api;
 
 use App\Models\Plan;
 use App\Models\User;
+use Database\Seeders\AmbassadorTierSeeder;
 use Database\Seeders\PlanSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -26,7 +27,9 @@ final class RegisterPlanTest extends TestCase
 
     public function test_register_assigns_the_free_plan_when_requested(): void
     {
-        $this->seed(PlanSeeder::class);
+        // Elegir el plan Embajador implica alta como embajador (rol derivado del
+        // plan), así que también hacen falta los tiers.
+        $this->seed([PlanSeeder::class, AmbassadorTierSeeder::class]);
 
         $this->postJson('/api/v1/auth/register', $this->payload([
             'email' => 'free@example.com',
@@ -37,6 +40,7 @@ final class RegisterPlanTest extends TestCase
         $embajador = Plan::query()->where('slug', 'embajador')->firstOrFail();
 
         $this->assertSame($embajador->id, $user->plan_id);
+        $this->assertSame('ambassador', $user->role);
     }
 
     public function test_register_does_not_assign_a_paid_plan(): void
