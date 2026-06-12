@@ -8,12 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
-final class User extends Authenticatable
+final class User extends Authenticatable implements MustVerifyEmail
 {
     use Billable;
     use HasApiTokens;
@@ -40,6 +41,8 @@ final class User extends Authenticatable
         'plan_id',
         'plan_expires_at',
         'is_premium',
+        'ambassador_tier_id',
+        'ambassador_slug',
     ];
 
     protected $hidden = [
@@ -135,10 +138,54 @@ final class User extends Authenticatable
         return $this->belongsTo(User::class, 'referred_by');
     }
 
+    public function tier(): BelongsTo
+    {
+        return $this->belongsTo(AmbassadorTier::class, 'ambassador_tier_id');
+    }
+
+    /** Cuenta de referidos cuyo plan se ha pagado (estado `paid`). */
+    public function successfulReferralsCount(): int
+    {
+        return $this->referralsMade()->where('status', Referral::STATUS_PAID)->count();
+    }
+
     /** El plan actual del usuario incluye la función de referidos/monitorización. */
     public function hasReferralPlan(): bool
     {
         return $this->plan?->is_referral === true;
+    }
+
+    public function commissionWithdrawals(): HasMany
+    {
+        return $this->hasMany(CommissionWithdrawal::class);
+    }
+
+    /** Comisiones ganadas (referidos pagados), en céntimos. */
+    public function referralEarningsCents(): int
+    {
+        return (int) $this->referralsMade()->where('status', Referral::STATUS_PAID)->sum('reward_cents');
+    }
+
+    /** Importe ya solicitado/aprobado/pagado (no cuenta lo rechazado), en céntimos. */
+    public function withdrawnCents(): int
+    {
+        return (int) $this->commissionWithdrawals()
+            ->where('status', '!=', CommissionWithdrawal::STATUS_REJECTED)
+            ->sum('amount_cents');
+    }
+
+    /** Saldo disponible para retirar = ganado − retirado, en céntimos. */
+    public function withdrawableCents(): int
+    {
+        return max(0, $this->referralEarningsCents() - $this->withdrawnCents());
+    }
+
+    /** El plan del usuario permite retirar comisiones en efectivo. */
+    public function canWithdrawCommissions(): bool
+    {
+        $slug = $this->plan?->slug;
+
+        return $slug !== null && in_array($slug, (array) config('billing.withdrawal_plans', ['empresa']), true);
     }
 
     public function hasTwoFactorEnabled(): bool
@@ -179,6 +226,11 @@ final class User extends Authenticatable
     public function isArtist(): bool
     {
         return $this->role === 'artist';
+    }
+
+    public function isAmbassador(): bool
+    {
+        return $this->role === 'ambassador';
     }
 
     public function hasActivePlan(): bool

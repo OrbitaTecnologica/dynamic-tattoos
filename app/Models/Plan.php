@@ -26,6 +26,8 @@ final class Plan extends Model
         'is_featured',
         'is_referral',
         'referral_reward',
+        'payout_mode',
+        'allowed_roles',
         'sort_order',
     ];
 
@@ -38,6 +40,7 @@ final class Plan extends Model
             'is_featured' => 'boolean',
             'is_referral' => 'boolean',
             'referral_reward' => 'decimal:2',
+            'allowed_roles' => 'array',
             'max_tattoos' => 'integer',
             'storage_mb' => 'integer',
             'sort_order' => 'integer',
@@ -67,5 +70,24 @@ final class Plan extends Model
     public function scopeOrdered(Builder $query): Builder
     {
         return $query->orderBy('sort_order')->orderBy('price');
+    }
+
+    // -------------------------------------------------------------------------
+    // Route binding
+    // -------------------------------------------------------------------------
+
+    /**
+     * Permite resolver {plan} por id (numérico) o por slug. Así el panel de
+     * cuenta puede seguir usando el id y el landing puede usar el slug.
+     */
+    public function resolveRouteBinding($value, $field = null): ?Model
+    {
+        return $this->newQuery()
+            ->when(
+                is_numeric($value),
+                static fn (Builder $query): Builder => $query->where('id', (int) $value),
+                static fn (Builder $query): Builder => $query->where('slug', (string) $value),
+            )
+            ->first();
     }
 }

@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\Admin\TatuadorApprovalController;
 use App\Http\Controllers\Api\V1\AuthTokenController;
 use App\Http\Controllers\Api\V1\BillingCheckoutController;
 use App\Http\Controllers\Api\V1\BillingPortalApiController;
 use App\Http\Controllers\Api\V1\BillingSubscriptionController;
+use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\LinkPageController;
 use App\Http\Controllers\Api\V1\LinkPageLinkController;
 use App\Http\Controllers\Api\V1\Me\AccountController;
+use App\Http\Controllers\Api\V1\Me\AmbassadorController as MeAmbassadorController;
 use App\Http\Controllers\Api\V1\Me\ActivityController;
 use App\Http\Controllers\Api\V1\Me\BillingController as MeBillingController;
 use App\Http\Controllers\Api\V1\Me\CompanyController;
@@ -30,6 +33,8 @@ use App\Http\Controllers\Api\V1\StoragePackController;
 use App\Http\Controllers\Api\V1\TattooContentController;
 use App\Http\Controllers\Api\V1\TattooController;
 use App\Http\Controllers\Api\V1\TattooScanController;
+use App\Http\Controllers\Api\V1\TatuadorController;
+use App\Http\Controllers\Api\V1\TatuadorSolicitudController;
 use App\Http\Middleware\TrackTeamMemberActivity;
 use Illuminate\Support\Facades\Route;
 
@@ -42,6 +47,14 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:api-auth')
         ->name('api.v1.auth.login');
 
+    Route::post('/auth/email/verify', [AuthTokenController::class, 'verifyEmail'])
+        ->middleware('throttle:api-auth')
+        ->name('api.v1.auth.email.verify');
+
+    Route::post('/auth/email/resend', [AuthTokenController::class, 'resendEmailCode'])
+        ->middleware('throttle:api-auth')
+        ->name('api.v1.auth.email.resend');
+
     // Visita/escaneo del QR de referidos (público).
     Route::post('/referrals/visit', ReferralVisitController::class)
         ->middleware('throttle:api')
@@ -52,6 +65,19 @@ Route::prefix('v1')->group(function (): void {
         ->middleware('throttle:api')
         ->where('shortCode', '[a-zA-Z0-9]{1,12}')
         ->name('api.v1.public.tattoos.show');
+
+    // Formulario de contacto público.
+    Route::post('/contact', ContactController::class)
+        ->middleware('throttle:api')
+        ->name('api.v1.contact');
+
+    // Red de tatuadores certificados (público): mapa + solicitud de homologación.
+    Route::get('/tatuadores', [TatuadorController::class, 'index'])
+        ->middleware('throttle:api')
+        ->name('api.v1.tatuadores.index');
+    Route::post('/tatuadores/solicitud', [TatuadorSolicitudController::class, 'store'])
+        ->middleware('throttle:api')
+        ->name('api.v1.tatuadores.solicitud');
 
     Route::middleware(['auth:sanctum', 'throttle:api', TrackTeamMemberActivity::class])->group(function (): void {
         Route::get('/auth/me', [AuthTokenController::class, 'me'])
@@ -154,6 +180,16 @@ Route::prefix('v1')->group(function (): void {
         // Cuenta: referidos (solo plan Partner)
         Route::get('/me/referrals', [MeReferralController::class, 'index'])
             ->name('api.v1.me.referrals');
+        Route::post('/me/referrals/withdraw', [MeReferralController::class, 'withdraw'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.me.referrals.withdraw');
+
+        // Cuenta: panel embajador (rol ambassador)
+        Route::get('/me/ambassador/summary', [MeAmbassadorController::class, 'summary'])
+            ->name('api.v1.me.ambassador.summary');
+        Route::patch('/me/ambassador/slug', [MeAmbassadorController::class, 'updateSlug'])
+            ->middleware('throttle:3,43200') // 3 cambios cada 30 días (43200 min)
+            ->name('api.v1.me.ambassador.slug');
 
         // Cuenta: 2FA
         Route::post('/me/2fa/enable', [TwoFactorController::class, 'enable'])
@@ -240,6 +276,11 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/link-page/links/{link}', [LinkPageLinkController::class, 'destroy'])
             ->middleware('throttle:api-write')
             ->name('api.v1.link-page.links.destroy');
+
+        // Admin: aprobación de solicitudes de tatuadores
+        Route::post('/admin/tatuadores/solicitudes/{solicitud}/aprobar', [TatuadorApprovalController::class, 'approve'])
+            ->middleware(['admin', 'throttle:api-write'])
+            ->name('api.v1.admin.tatuadores.solicitudes.aprobar');
 
         Route::get('/admin/plans', [PlanController::class, 'adminIndex'])
             ->name('api.v1.admin.plans.index');
