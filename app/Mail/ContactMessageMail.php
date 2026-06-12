@@ -30,6 +30,10 @@ final class ContactMessageMail extends Mailable
             : 'Nuevo mensaje de contacto';
 
         return new Envelope(
+            from: new Address(
+                (string) config('contact.from.address'),
+                (string) config('contact.from.name'),
+            ),
             subject: 'Contacto · '.$subject,
             replyTo: [new Address($this->senderEmail, $this->senderName)],
         );

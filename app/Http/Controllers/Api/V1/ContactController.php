@@ -16,12 +16,14 @@ final class ContactController extends Controller
     {
         $data = $request->validated();
 
-        Mail::to((string) config('contact.to'))->send(new ContactMessageMail(
-            senderName: $data['name'],
-            senderEmail: $data['email'],
-            subjectLine: $data['subject'] ?? null,
-            body: $data['message'],
-        ));
+        Mail::mailer((string) config('contact.mailer'))
+            ->to((string) config('contact.to'))
+            ->send(new ContactMessageMail(
+                senderName: $data['name'],
+                senderEmail: $data['email'],
+                subjectLine: $data['subject'] ?? null,
+                body: $data['message'],
+            ));
 
         return response()->json(['message' => 'ok']);
     }

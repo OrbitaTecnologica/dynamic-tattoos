@@ -49,6 +49,21 @@ return [
             'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
         ],
 
+        // Mailer dedicado al formulario de contacto público (ver config/contact.php).
+        // SMTP propio (CONTACT_MAIL_*) independiente del mailer global, para enviar
+        // desde la cuenta del buzón de contacto (p.ej. info@dynamic-tattoos.com).
+        'contact' => [
+            'transport' => 'smtp',
+            'scheme' => env('CONTACT_MAIL_SCHEME'),
+            'url' => env('CONTACT_MAIL_URL'),
+            'host' => env('CONTACT_MAIL_HOST', '127.0.0.1'),
+            'port' => env('CONTACT_MAIL_PORT', 587),
+            'username' => env('CONTACT_MAIL_USERNAME'),
+            'password' => env('CONTACT_MAIL_PASSWORD'),
+            'timeout' => null,
+            'local_domain' => env('MAIL_EHLO_DOMAIN', parse_url((string) env('APP_URL', 'http://localhost'), PHP_URL_HOST)),
+        ],
+
         'ses' => [
             'transport' => 'ses',
         ],

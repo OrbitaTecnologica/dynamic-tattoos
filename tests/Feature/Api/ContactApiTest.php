@@ -16,7 +16,12 @@ final class ContactApiTest extends TestCase
     public function test_public_contact_form_sends_mail_to_admin(): void
     {
         Mail::fake();
-        config(['contact.to' => 'admin@dynamic-tattoos.test']);
+        config([
+            'contact.to' => 'admin@dynamic-tattoos.test',
+            'contact.mailer' => 'contact',
+            'contact.from.address' => 'contacto@dynamic-tattoos.test',
+            'contact.from.name' => 'DT Contacto',
+        ]);
 
         $this->postJson('/api/v1/contact', [
             'name' => 'Ada Lovelace',
@@ -28,8 +33,10 @@ final class ContactApiTest extends TestCase
             ->assertJsonPath('message', 'ok');
 
         Mail::assertSent(ContactMessageMail::class, static function (ContactMessageMail $mail): bool {
-            return $mail->hasTo('admin@dynamic-tattoos.test')
-                && $mail->hasReplyTo('ada@example.com');
+            return $mail->mailer === 'contact'
+                && $mail->hasTo('admin@dynamic-tattoos.test')
+                && $mail->hasReplyTo('ada@example.com')
+                && $mail->envelope()->from?->address === 'contacto@dynamic-tattoos.test';
         });
     }
 
