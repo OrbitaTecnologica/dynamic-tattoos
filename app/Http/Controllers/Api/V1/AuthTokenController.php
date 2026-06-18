@@ -10,6 +10,7 @@ use App\Http\Requests\Api\V1\RegisterRequest;
 use App\Http\Requests\Api\V1\ResendCodeRequest;
 use App\Http\Requests\Api\V1\VerifyEmailRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Mail\AmbassadorWelcomeMail;
 use App\Models\Plan;
 use App\Models\User;
 use App\Services\EmailVerificationService;
@@ -20,6 +21,7 @@ use Illuminate\Support\Str;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 final class AuthTokenController extends Controller
@@ -111,7 +113,7 @@ final class AuthTokenController extends Controller
     /**
      * @throws ValidationException
      */
-    public function verifyEmail(VerifyEmailRequest $request, EmailVerificationService $verification): JsonResponse
+    public function verifyEmail(VerifyEmailRequest $request, EmailVerificationService $verification, ReferralService $referrals): JsonResponse
     {
         $email = mb_strtolower((string) $request->input('email'));
         $user = User::query()->where('email', $email)->first();
@@ -133,6 +135,21 @@ final class AuthTokenController extends Controller
             ->causedBy($user)
             ->event('email_verified')
             ->log('Email verificado');
+
+        if ($user->isAmbassador()) {
+            try {
+                $code = $referrals->ensureCode($user);
+                $referralLink = rtrim((string) config('app.frontend_url'), '/').'/register?ref='.$code;
+                $reward = (float) ($user->plan?->referral_reward ?? config('billing.referral_reward', 5.0));
+                Mail::to($user->email)->send(new AmbassadorWelcomeMail(
+                    name: (string) $user->name,
+                    referralLink: $referralLink,
+                    rewardPerReferral: $reward,
+                ));
+            } catch (\Throwable) {
+                // El fallo del email de bienvenida no debe bloquear la verificación.
+            }
+        }
 
         return response()->json([
             'data' => [
