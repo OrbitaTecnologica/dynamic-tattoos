@@ -21,7 +21,7 @@
 {{-- Footer --}}
 <x-slot:footer>
 <x-mail::footer>
-© {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
+© {{ date('Y') }} [Dynamic Tattoos]({{ config('app.frontend_url', config('app.url')) }}). Todos los derechos reservados.
 </x-mail::footer>
 </x-slot:footer>
 </x-mail::layout>

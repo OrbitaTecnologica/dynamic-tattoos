@@ -94,4 +94,16 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::view('/account', 'admin.account')->name('account');
 });
 
+/*
+|--------------------------------------------------------------------------
+| QrCode redirect por ID numérico — debe ir al final para no capturar otras rutas
+| Escanear d-t.me/{id} → busca QrCode::find($id) → redirect al url de destino
+|--------------------------------------------------------------------------
+*/
+Route::get('/{id}', static function (int $id) {
+    $qr = \App\Models\QrCode::find($id);
+    abort_unless($qr && $qr->url, 404);
+    return redirect()->away($qr->url, 302);
+})->where('id', '[0-9]+')->name('qr.redirect');
+
 require __DIR__.'/auth.php';

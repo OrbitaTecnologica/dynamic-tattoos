@@ -1,14 +1,18 @@
 <x-mail::message>
-# Verifica tu correo
+# Verifica tu correo electrónico
 
-Usa este código para confirmar tu cuenta de Dynamic Tattoos:
+Gracias por registrarte en **Dynamic Tattoos**. Introduce el siguiente código para activar tu cuenta:
 
 <x-mail::panel>
-# {{ $code }}
+<p style="text-align:center;font-size:42px;font-weight:800;letter-spacing:16px;color:#111111;margin:10px 0 10px 16px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">{{ $code }}</p>
 </x-mail::panel>
 
-El código caduca en {{ config('verification.ttl_minutes') }} minutos. Si no creaste esta cuenta, ignora este mensaje.
+<x-mail::button :url="rtrim(config('app.frontend_url'), '/') . '/verificar-email'">
+Verificar mi cuenta
+</x-mail::button>
+
+Este código expira en **{{ config('verification.ttl_minutes') }} minutos**. Si no creaste esta cuenta, ignora este correo de forma segura.
 
 Gracias,<br>
-Dynamic Tattoos
+El equipo de Dynamic Tattoos
 </x-mail::message>
