@@ -104,15 +104,27 @@ require __DIR__.'/auth.php';
 |--------------------------------------------------------------------------
 */
 Route::get('/{slug}', static function (string $slug) {
+    $frontendUrl = rtrim((string) env('FRONTEND_URL', 'https://www.dynamic-tattoos.com'), '/');
+
     $qr = \App\Models\QrCode::where('slug', $slug)->first()
         ?? (ctype_digit($slug) ? \App\Models\QrCode::find((int) $slug) : null);
 
-    if ($qr && $qr->url) {
-        return redirect()->away($qr->url, 302);
+    if ($qr) {
+        $dest = (string) ($qr->url ?? '');
+        // Avoid self-referential redirect loops (url points back to d-t.me/{slug})
+        $isSelf = $dest === '' || str_ends_with(rtrim($dest, '/'), '/' . $slug);
+        if (!$isSelf) {
+            return redirect()->away($dest, 302);
+        }
+        // QR exists but no real destination yet — show the frontend gallery
+        return redirect()->away("{$frontendUrl}/t/{$slug}", 302);
     }
 
     // Fallback: legacy tattoos stored in the tattoos table (short_code system)
     $tattoo = \App\Models\Tattoo::where('short_code', $slug)->first();
-    abort_unless($tattoo, 404);
-    return redirect()->route('tattoo.show', ['shortCode' => $slug], 302);
+    if ($tattoo) {
+        return redirect()->route('tattoo.show', ['shortCode' => $slug], 302);
+    }
+
+    abort(404);
 })->where('slug', '[A-Za-z0-9_\-]+')->name('qr.redirect');
