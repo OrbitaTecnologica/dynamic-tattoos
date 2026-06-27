@@ -241,6 +241,9 @@ Route::prefix('v1')->group(function (): void {
             ->name('api.v1.qr-codes.store');
         Route::get('/qr-codes/{qrCode}', [QrCodeController::class, 'show'])
             ->name('api.v1.qr-codes.show');
+        Route::patch('/qr-codes/{qrCode}', [QrCodeController::class, 'update'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.qr-codes.update');
         Route::delete('/qr-codes/{qrCode}', [QrCodeController::class, 'destroy'])
             ->middleware('throttle:api-write')
             ->name('api.v1.qr-codes.destroy');

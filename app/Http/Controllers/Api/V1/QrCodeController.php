@@ -57,6 +57,31 @@ final class QrCodeController extends Controller
         ], 201);
     }
 
+    public function update(Request $request, QrCode $qrCode): JsonResponse
+    {
+        $this->authorize('update', $qrCode);
+
+        $validated = $request->validate([
+            'url'                  => ['sometimes', 'required', 'string', 'max:2000'],
+            'color'                => ['sometimes', 'required', 'string', 'max:50'],
+            'dots_type'            => ['sometimes', 'required', 'string', 'max:50'],
+            'corners_square_type'  => ['sometimes', 'required', 'string', 'max:50'],
+            'corners_dot_type'     => ['sometimes', 'required', 'string', 'max:50'],
+        ]);
+
+        $qrCode->update($validated);
+
+        activity('qr')
+            ->causedBy($request->user())
+            ->event('updated')
+            ->withProperties(['detail' => (string) $qrCode->url])
+            ->log('QR actualizado');
+
+        return response()->json([
+            'data' => new QrCodeResource($qrCode),
+        ]);
+    }
+
     public function show(Request $request, QrCode $qrCode): JsonResponse
     {
         $this->authorize('view', $qrCode);
