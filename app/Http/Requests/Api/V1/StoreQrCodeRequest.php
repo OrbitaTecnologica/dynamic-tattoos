@@ -22,7 +22,7 @@ final class StoreQrCodeRequest extends FormRequest
         return [
             'slug' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9._~\-\/]+$/', 'unique:qr_codes,slug'],
             'name' => ['nullable', 'string', 'max:150'],
-            'url' => ['required', 'string', 'url', 'max:2048'],
+            'url' => ['nullable', 'string', 'url', 'max:2048'],
             'color' => ['nullable', 'string', 'max:9'],
             'dots_type' => ['nullable', Rule::in(['dots', 'rounded', 'extra-rounded', 'square', 'classy', 'classy-rounded'])],
             'corners_square_type' => ['nullable', Rule::in(['dot', 'extra-rounded', 'square'])],
