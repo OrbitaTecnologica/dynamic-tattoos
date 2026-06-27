@@ -106,6 +106,13 @@ require __DIR__.'/auth.php';
 Route::get('/{slug}', static function (string $slug) {
     $qr = \App\Models\QrCode::where('slug', $slug)->first()
         ?? (ctype_digit($slug) ? \App\Models\QrCode::find((int) $slug) : null);
-    abort_unless($qr && $qr->url, 404);
-    return redirect()->away($qr->url, 302);
+
+    if ($qr && $qr->url) {
+        return redirect()->away($qr->url, 302);
+    }
+
+    // Fallback: legacy tattoos stored in the tattoos table (short_code system)
+    $tattoo = \App\Models\Tattoo::where('short_code', $slug)->first();
+    abort_unless($tattoo, 404);
+    return redirect()->route('tattoo.show', ['shortCode' => $slug], 302);
 })->where('slug', '[A-Za-z0-9_\-]+')->name('qr.redirect');
