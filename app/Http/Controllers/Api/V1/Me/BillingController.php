@@ -25,7 +25,7 @@ final class BillingController extends Controller
 
         return response()->json([
             'data' => [
-                'status' => $this->resolveStatus($subscription),
+                'status' => $this->resolveStatus($subscription, $plan),
                 'plan' => $plan instanceof Plan ? new PlanResource($plan) : null,
                 'has_referrals' => $user->hasReferralPlan(),
                 'renews_at' => $user->renews_at?->toIso8601String(),
@@ -60,10 +60,13 @@ final class BillingController extends Controller
         return response()->json(['data' => $invoices]);
     }
 
-    private function resolveStatus(?Subscription $subscription): string
+    private function resolveStatus(?Subscription $subscription, ?Plan $plan): string
     {
+        if ($subscription === null) {
+            return $plan !== null ? 'activa' : 'sin_plan';
+        }
+
         return match (true) {
-            $subscription === null => 'sin_plan',
             $subscription->onGracePeriod() => 'grace_period',
             $subscription->canceled() => 'cancelada',
             $subscription->valid() => 'activa',

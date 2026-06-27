@@ -94,16 +94,18 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::view('/account', 'admin.account')->name('account');
 });
 
+require __DIR__.'/auth.php';
+
 /*
 |--------------------------------------------------------------------------
-| QrCode redirect por ID numérico — debe ir al final para no capturar otras rutas
-| Escanear d-t.me/{id} → busca QrCode::find($id) → redirect al url de destino
+| QrCode redirect — d-t.me/{slug} o d-t.me/{id}
+| Primero intenta por slug (texto), luego por ID numérico.
+| DEBE ir después de auth.php para no capturar /login, /forgot-password, etc.
 |--------------------------------------------------------------------------
 */
-Route::get('/{id}', static function (int $id) {
-    $qr = \App\Models\QrCode::find($id);
+Route::get('/{slug}', static function (string $slug) {
+    $qr = \App\Models\QrCode::where('slug', $slug)->first()
+        ?? (ctype_digit($slug) ? \App\Models\QrCode::find((int) $slug) : null);
     abort_unless($qr && $qr->url, 404);
     return redirect()->away($qr->url, 302);
-})->where('id', '[0-9]+')->name('qr.redirect');
-
-require __DIR__.'/auth.php';
+})->where('slug', '[A-Za-z0-9_\-]+')->name('qr.redirect');
