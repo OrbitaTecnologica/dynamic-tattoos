@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\QrCode;
 use App\Models\Tattoo;
 use App\Models\TattooContent;
 use App\Models\TattooScan;
@@ -43,7 +44,7 @@ final class TattooRedirectController extends Controller
         $content = $this->resolveActiveContent($shortCode);
 
         if ($content === null) {
-            abort(404);
+            return $this->fallbackToQrCode($shortCode);
         }
 
         $this->recordScan($request, $content->tattoo_id);
@@ -76,6 +77,28 @@ final class TattooRedirectController extends Controller
      * The cache key "tattoo_content_{short_code}" is explicitly busted in
      * ManageTattoo::save() so changes are visible on the next scan.
      */
+    /**
+     * When no tattoo matches the short code, check if it's a QR code slug
+     * and redirect to its configured destination (handles nginx /t/* rewrite).
+     */
+    private function fallbackToQrCode(string $shortCode): RedirectResponse
+    {
+        $qr = \App\Models\QrCode::where('slug', $shortCode)->first();
+
+        if ($qr && $qr->url) {
+            $dest = (string) $qr->url;
+            $isSelf = str_ends_with(rtrim($dest, '/'), '/' . $shortCode)
+                   || str_ends_with(rtrim($dest, '/'), '/t/' . $shortCode);
+            if (! $isSelf) {
+                return redirect()->away($dest, 302);
+            }
+        }
+
+        // Last resort: show the frontend gallery for this slug
+        $frontendUrl = rtrim((string) config('services.frontend.url', env('FRONTEND_URL', 'https://www.dynamic-tattoos.com')), '/');
+        return redirect()->away("{$frontendUrl}/t/{$shortCode}", 302);
+    }
+
     private function resolveActiveContent(string $shortCode): ?TattooContent
     {
         $cacheKey = "tattoo_content_{$shortCode}";
