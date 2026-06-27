@@ -124,6 +124,9 @@ final class AuthTokenController extends Controller
             ]);
         }
 
+        // Revoke all previous tokens so stale sessions don't survive a re-registration.
+        $user->tokens()->delete();
+
         $tokenName = (string) $request->input('device_name', 'api-token');
         $newToken = $user->createToken($tokenName);
         $newToken->accessToken->forceFill([
