@@ -247,6 +247,9 @@ Route::prefix('v1')->group(function (): void {
         Route::delete('/qr-codes/{qrCode}', [QrCodeController::class, 'destroy'])
             ->middleware('throttle:api-write')
             ->name('api.v1.qr-codes.destroy');
+        Route::patch('/qr-codes/{qrCode}/tattooed', [QrCodeController::class, 'tattooed'])
+            ->middleware('throttle:api-write')
+            ->name('api.v1.qr-codes.tattooed');
         Route::post('/qr-codes/{qrCode}/email', [QrCodeController::class, 'email'])
             ->middleware('throttle:api-write')
             ->name('api.v1.qr-codes.email');

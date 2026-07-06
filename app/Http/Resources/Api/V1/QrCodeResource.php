@@ -23,6 +23,8 @@ final class QrCodeResource extends JsonResource
             'dots_type' => $this->dots_type,
             'corners_square_type' => $this->corners_square_type,
             'corners_dot_type' => $this->corners_dot_type,
+            'tattooed' => $this->tattooed_at !== null,
+            'tattooed_at' => $this->tattooed_at?->toIso8601String(),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

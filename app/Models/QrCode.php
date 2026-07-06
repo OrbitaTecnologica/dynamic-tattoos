@@ -22,7 +22,23 @@ final class QrCode extends Model
         'dots_type',
         'corners_square_type',
         'corners_dot_type',
+        'tattooed_at',
     ];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'tattooed_at' => 'datetime',
+        ];
+    }
+
+    public function isTattooed(): bool
+    {
+        return $this->tattooed_at !== null;
+    }
 
     public function user(): BelongsTo
     {

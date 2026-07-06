@@ -13,7 +13,9 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 final class QrCodeController extends Controller
 {
@@ -95,9 +97,62 @@ final class QrCodeController extends Controller
     {
         $this->authorize('delete', $qrCode);
 
+        // QR sagrado: si el usuario ya se lo tatuó, exigimos la contraseña
+        // para evitar que un tatuaje quede apuntando a un enlace muerto.
+        if ($qrCode->isTattooed()) {
+            $this->assertPasswordConfirmed($request);
+        }
+
         $qrCode->delete();
 
         return response()->json([], 204);
+    }
+
+    /**
+     * Marca o desmarca un QR como "ya tatuado".
+     * Marcarlo es libre; desmarcarlo exige la contraseña (protección).
+     */
+    public function tattooed(Request $request, QrCode $qrCode): JsonResponse
+    {
+        $this->authorize('update', $qrCode);
+
+        $validated = $request->validate([
+            'tattooed' => ['required', 'boolean'],
+        ]);
+
+        $wantsTattooed = (bool) $validated['tattooed'];
+
+        if ($wantsTattooed) {
+            if (! $qrCode->isTattooed()) {
+                $qrCode->forceFill(['tattooed_at' => now()])->save();
+            }
+        } else {
+            if ($qrCode->isTattooed()) {
+                $this->assertPasswordConfirmed($request);
+                $qrCode->forceFill(['tattooed_at' => null])->save();
+            }
+        }
+
+        return response()->json([
+            'data' => new QrCodeResource($qrCode->refresh()),
+        ]);
+    }
+
+    /**
+     * Verifica que el request traiga la contraseña actual del usuario.
+     *
+     * @throws ValidationException
+     */
+    private function assertPasswordConfirmed(Request $request): void
+    {
+        $password = (string) $request->input('current_password', '');
+        $user = $request->user();
+
+        if ($password === '' || $user === null || ! Hash::check($password, (string) $user->password)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['La contraseña no es correcta.'],
+            ]);
+        }
     }
 
     public function slugAvailable(Request $request): JsonResponse
