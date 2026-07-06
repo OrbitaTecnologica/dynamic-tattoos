@@ -32,4 +32,11 @@ return [
         'trim',
         explode(',', (string) env('WITHDRAWAL_PLANS', 'empresa')),
     ))),
+
+    /*
+    | Importe mínimo (en €) para solicitar un retiro de comisiones en efectivo.
+    | Regla de negocio B2: Negocio retira a partir de 45€ (o 3 clientes, que a
+    | 20€/cliente ya superan el mínimo). Factura + transferencia, revisión manual.
+    */
+    'withdrawal_min_eur' => (float) env('WITHDRAWAL_MIN_EUR', 45.0),
 ];

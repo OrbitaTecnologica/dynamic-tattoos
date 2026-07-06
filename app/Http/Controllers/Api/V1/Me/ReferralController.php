@@ -71,6 +71,8 @@ final class ReferralController extends Controller
 
         $amountCents = (int) round(((float) $request->validated()['amount']) * 100);
 
+        $minCents = (int) round(((float) config('billing.withdrawal_min_eur', 45.0)) * 100);
+        abort_if($amountCents < $minCents, 422, 'El retiro mínimo es de '.number_format($minCents / 100, 0, ',', '.').' €.');
         abort_if($amountCents > $user->withdrawableCents(), 422, 'El importe supera tu saldo disponible.');
 
         $withdrawal = $user->commissionWithdrawals()->create([

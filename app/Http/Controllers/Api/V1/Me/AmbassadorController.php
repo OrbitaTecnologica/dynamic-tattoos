@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Me;
 
 use App\Http\Controllers\Controller;
 use App\Models\AmbassadorTier;
+use App\Models\CommissionWithdrawal;
 use App\Models\Referral;
 use App\Models\User;
 use App\Services\Referrals\ReferralService;
@@ -59,6 +60,14 @@ final class AmbassadorController extends Controller
                 'earnings_cents' => $user->referralEarningsCents(),
                 'withdrawable_cents' => $user->withdrawableCents(),
                 'payout_mode' => $user->plan?->payout_mode ?? 'credit',
+                'can_withdraw' => $user->canWithdrawCommissions(),
+                'withdrawal_min_cents' => (int) round(((float) config('billing.withdrawal_min_eur', 45.0)) * 100),
+                'withdrawals' => $user->commissionWithdrawals()->latest()->get()->map(fn (CommissionWithdrawal $w): array => [
+                    'id' => $w->id,
+                    'amount_cents' => (int) $w->amount_cents,
+                    'status' => $w->status,
+                    'date' => $w->created_at?->toIso8601String(),
+                ])->all(),
                 'slug' => $user->ambassador_slug,
                 'link_url' => $linkUrl,
                 'referral_code' => $code,
