@@ -21,7 +21,8 @@ final class ReferralController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        abort_unless($user->hasReferralPlan(), 403, 'La monitorización de referidos es exclusiva del plan Partner.');
+        // Referido universal: cualquier usuario autenticado tiene su enlace y ve sus
+        // referidos/comisiones. El retiro en efectivo sigue restringido en withdraw().
 
         $code = $referrals->ensureCode($user);
         $shareUrl = rtrim((string) config('app.frontend_url'), '/').'/register?ref='.$code;
@@ -34,7 +35,7 @@ final class ReferralController extends Controller
                 'code' => $code,
                 'share_url' => $shareUrl,
                 'qr_svg' => (string) QrCodeGenerator::format('svg')->size(240)->margin(1)->generate($shareUrl),
-                'reward_per_referral' => (float) config('billing.referral_reward', 0),
+                'reward_per_referral' => (float) ($user->plan?->referral_reward ?? config('billing.referral_reward', 0)),
                 'can_withdraw' => $user->canWithdrawCommissions(),
                 'withdrawable' => round($user->withdrawableCents() / 100, 2),
                 'withdrawals' => $user->commissionWithdrawals()->latest()->get()->map(fn (CommissionWithdrawal $w): array => [
