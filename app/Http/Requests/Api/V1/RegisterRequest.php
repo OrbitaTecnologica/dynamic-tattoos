@@ -36,7 +36,10 @@ final class RegisterRequest extends FormRequest
             // Slug del plan elegido en el landing (opcional). El gratis se asigna
             // en el registro; el de pago se confirma vía checkout/webhook.
             'plan' => ['nullable', 'string', 'max:100'],
-            'captcha_token' => ['nullable', new ValidCaptcha()],
+            // `present` (no `nullable`): el campo debe venir siempre y ValidCaptcha lo
+            // verifica. Así un bot que llame al API sin resolver el captcha es rechazado.
+            // En dev (sin secret) ValidCaptcha no bloquea, así que no rompe local.
+            'captcha_token' => ['present', new ValidCaptcha()],
         ];
     }
 }
