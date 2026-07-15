@@ -37,11 +37,34 @@ final class QrCodeController extends Controller
         /** @var User $user */
         $user = $request->user();
 
+        // El QR Studio es exclusivo de los planes de pago. El plan gratuito
+        // "embajador" es solo de referidos y no puede crear QR.
+        abort_unless(
+            $user->canUseQrStudio(),
+            403,
+            'Tu plan actual no incluye el QR Studio. Contrata un plan de pago para crear tu QR.'
+        );
+
+        // Un solo QR por cuenta.
+        abort_if(
+            QrCode::query()->forUser($user->id)->exists(),
+            422,
+            'Solo puedes tener un QR por cuenta. Gestiona o elimina el que ya tienes.'
+        );
+
+        // El identificador va generado por el servidor (6 caracteres). Es lo
+        // único que se codifica en el QR: d-t.me/{code}.
+        $slug = QrCode::generateUniqueCode();
+        $frontendUrl = rtrim((string) config('app.frontend_url', 'https://www.dynamic-tattoos.com'), '/');
+        $destination = $request->filled('url')
+            ? (string) $request->input('url')
+            : "{$frontendUrl}/t/{$slug}";
+
         $qrCode = QrCode::query()->create([
             'user_id' => $user->id,
-            'slug' => $request->input('slug'),
+            'slug' => $slug,
             'name' => $request->input('name'),
-            'url' => (string) $request->input('url'),
+            'url' => $destination,
             'color' => (string) $request->input('color', '#1a1a1a'),
             'dots_type' => (string) $request->input('dots_type', 'square'),
             'corners_square_type' => (string) $request->input('corners_square_type', 'square'),

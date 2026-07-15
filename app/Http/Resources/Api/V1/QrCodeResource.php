@@ -18,6 +18,8 @@ final class QrCodeResource extends JsonResource
             'id' => $this->id,
             'slug' => $this->slug,
             'name' => $this->name,
+            // URL pública que se codifica en el QR (d-t.me/{code}). Es fija.
+            'public_url' => $this->slug ? 'https://d-t.me/'.$this->slug : null,
             'url' => $this->url,
             'color' => $this->color,
             'dots_type' => $this->dots_type,

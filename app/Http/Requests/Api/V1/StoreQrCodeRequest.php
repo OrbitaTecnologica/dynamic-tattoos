@@ -20,7 +20,9 @@ final class StoreQrCodeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[A-Za-z0-9._~\-\/]+$/', 'unique:qr_codes,slug'],
+            // El identificador (slug) lo genera el servidor de forma automática
+            // (6 caracteres). No se acepta desde el cliente para evitar choques
+            // de nombres entre usuarios. Ver QrCode::generateUniqueCode().
             'name' => ['nullable', 'string', 'max:150'],
             'url' => ['nullable', 'string', 'url', 'max:2048'],
             'color' => ['nullable', 'string', 'max:9'],

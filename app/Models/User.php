@@ -155,6 +155,15 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->plan?->is_referral === true;
     }
 
+    /**
+     * El QR Studio es exclusivo de los planes de pago. El plan gratuito
+     * "embajador" (0€) es solo de referidos y no puede crear QR.
+     */
+    public function canUseQrStudio(): bool
+    {
+        return $this->plan !== null && (float) $this->plan->price > 0;
+    }
+
     public function commissionWithdrawals(): HasMany
     {
         return $this->hasMany(CommissionWithdrawal::class);
