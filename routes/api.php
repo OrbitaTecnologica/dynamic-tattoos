@@ -67,6 +67,12 @@ Route::prefix('v1')->group(function (): void {
         ->where('shortCode', '[a-zA-Z0-9]{1,12}')
         ->name('api.v1.public.tattoos.show');
 
+    // Vista pública de una tarjeta DynamicLink por slug (consumida por /u/{slug} del SPA).
+    Route::get('/u/{slug}', [LinkPageController::class, 'showPublic'])
+        ->middleware('throttle:api')
+        ->where('slug', '[A-Za-z0-9_\-]{1,60}')
+        ->name('api.v1.link-page.public');
+
     // Formulario de contacto público.
     Route::post('/contact', ContactController::class)
         ->middleware('throttle:api')

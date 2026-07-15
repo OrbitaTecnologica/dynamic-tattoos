@@ -25,6 +25,26 @@ final class LinkPageController extends Controller
         ]);
     }
 
+    /**
+     * Vista pública (sin auth) de una tarjeta DynamicLink por slug.
+     * Solo tarjetas publicadas; devuelve los enlaces activos ordenados.
+     * La consume la página pública /u/{slug} del frontend.
+     */
+    public function showPublic(string $slug): JsonResponse
+    {
+        $page = LinkPage::query()
+            ->with(['links' => fn ($q) => $q->where('is_active', true)->orderBy('position')])
+            ->where('slug', $slug)
+            ->where('is_published', true)
+            ->firstOrFail();
+
+        LinkPage::query()->where('id', $page->id)->increment('views_count');
+
+        return response()->json([
+            'data' => new LinkPageResource($page),
+        ]);
+    }
+
     public function update(UpdateLinkPageRequest $request): JsonResponse
     {
         $page = $this->resolvePage($request->user());
