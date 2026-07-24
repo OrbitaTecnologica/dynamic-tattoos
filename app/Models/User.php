@@ -4,22 +4,30 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Observers\UserObserver;
 use Laravel\Cashier\Billable;
 use Laravel\Sanctum\HasApiTokens;
 
+#[ObservedBy([UserObserver::class])]
 final class User extends Authenticatable implements MustVerifyEmail
 {
     use Billable;
     use HasApiTokens;
     use HasFactory;
     use Notifiable;
+    use SoftDeletes;
+
+    /** Prefijo con el que se renombra el email al enviar un usuario a la papelera. */
+    public const TRASH_EMAIL_PREFIX = 'trashed_';
 
     protected $fillable = [
         'name',
@@ -226,6 +234,16 @@ final class User extends Authenticatable implements MustVerifyEmail
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
+
+    /** Email real del usuario, quitando el prefijo de papelera si lo tuviera. */
+    public function displayEmail(): string
+    {
+        $prefix = self::TRASH_EMAIL_PREFIX.$this->id.'_';
+
+        return str_starts_with((string) $this->email, $prefix)
+            ? substr((string) $this->email, strlen($prefix))
+            : (string) $this->email;
+    }
 
     public function isAdmin(): bool
     {

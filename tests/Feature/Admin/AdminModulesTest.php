@@ -106,10 +106,10 @@ final class AdminModulesTest extends TestCase
         Livewire::test(UserList::class)->call('deleteUser', $admin->id);
         $this->assertDatabaseHas('users', ['id' => $admin->id]);
 
-        // Puede borrar a otro usuario.
+        // Puede borrar a otro usuario (ahora es soft-delete: va a la papelera).
         $victim = User::factory()->create();
         Livewire::test(UserList::class)->call('deleteUser', $victim->id);
-        $this->assertDatabaseMissing('users', ['id' => $victim->id]);
+        $this->assertSoftDeleted('users', ['id' => $victim->id]);
 
         // Restablece el 2FA.
         $with2fa = User::factory()->create([

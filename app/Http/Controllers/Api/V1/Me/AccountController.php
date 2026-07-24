@@ -29,7 +29,9 @@ final class AccountController extends Controller
         }
 
         $user->tokens()->delete();
-        $user->delete();
+        // Borrado RGPD: eliminación física definitiva (no papelera). El cascade de
+        // la BD limpia tatuajes, QRs, link page y demás datos asociados.
+        $user->forceDelete();
 
         return response()->json([], 204);
     }
