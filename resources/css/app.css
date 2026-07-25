@@ -97,3 +97,29 @@
 		transition: background-color 5000s ease-in-out 0s;
 	}
 }
+
+/*
+ * Fix autofill ilegible (login/panel, tema oscuro).
+ * El truco anti-autofill de arriba vive en @layer base y las utilidades Tailwind
+ * (focus:ring-1, transition) viven en @layer utilities, que SIEMPRE gana a base:
+ * al enfocar, el box-shadow oscuro desaparecía y quedaba texto claro sobre el
+ * fondo azul del autofill de Chrome. Estas reglas van FUERA de @layer (el CSS sin
+ * capa gana a todas), rehacen el fondo oscuro e incluyen el anillo cyan en el focus.
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+select:-webkit-autofill,
+select:-webkit-autofill:hover {
+	-webkit-text-fill-color: rgb(243 244 246);
+	caret-color: rgb(243 244 246);
+	-webkit-box-shadow: inset 0 0 0 1000px rgb(10 10 10);
+	transition: background-color 5000s ease-in-out 0s;
+}
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill:focus {
+	-webkit-text-fill-color: rgb(243 244 246);
+	-webkit-box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.25), inset 0 0 0 1000px rgb(10 10 10);
+}
