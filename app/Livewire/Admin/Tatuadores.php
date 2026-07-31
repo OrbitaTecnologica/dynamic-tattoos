@@ -8,6 +8,7 @@ use App\Mail\TatuadorApprovedMail;
 use App\Models\Tatuador;
 use App\Models\TatuadorSolicitud;
 use App\Models\User;
+use App\Services\Referrals\ReferralService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
@@ -56,7 +57,17 @@ final class Tatuadores extends Component
     #[Computed]
     public function tatuadores(): Collection
     {
-        return Tatuador::query()->orderBy('sort_order')->orderBy('studio_name')->get();
+        return Tatuador::query()
+            ->with('user:id,name,referral_code')
+            ->orderBy('sort_order')
+            ->orderBy('studio_name')
+            ->get();
+    }
+
+    /** Base pública para construir el link de recomendación del tatuador. */
+    public function shareBase(): string
+    {
+        return rtrim((string) (config('app.frontend_url') ?: 'https://www.dynamic-tattoos.com'), '/');
     }
 
     /** @return Collection<int, TatuadorSolicitud> */
@@ -114,8 +125,25 @@ final class Tatuadores extends Component
         $this->showModal = true;
     }
 
+    /** Al pegar un enlace de Google Maps, extrae lat/lng automáticamente. */
+    public function updatedMapsUrl(string $value): void
+    {
+        if ($this->lat !== '' || $this->lng !== '') {
+            return;
+        }
+
+        // Formatos: .../@40.42,-3.70,15z · ?q=40.42,-3.70 · !3d40.42!4d-3.70
+        if (preg_match('/@(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/', $value, $m)
+            || preg_match('/[?&]q=(-?\d{1,2}\.\d+),(-?\d{1,3}\.\d+)/', $value, $m)
+            || preg_match('/!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/', $value, $m)) {
+            $this->lat = $m[1];
+            $this->lng = $m[2];
+        }
+    }
+
     public function save(): void
     {
+        // Sin coordenadas se puede guardar la ficha, pero no publicarla en el mapa.
         $this->validate([
             'studioName' => ['required', 'string', 'max:150'],
             'artistName' => ['nullable', 'string', 'max:150'],
@@ -124,10 +152,13 @@ final class Tatuadores extends Component
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:255'],
             'mapsUrl' => ['nullable', 'string', 'max:1000'],
-            'lat' => ['required', 'numeric'],
-            'lng' => ['required', 'numeric'],
+            'lat' => [$this->isActive ? 'required' : 'nullable', 'numeric'],
+            'lng' => [$this->isActive ? 'required' : 'nullable', 'numeric'],
             'isActive' => ['boolean'],
             'sortOrder' => ['integer', 'min:0'],
+        ], [
+            'lat.required' => 'Para publicar en el mapa necesita coordenadas (pega el enlace de Google Maps).',
+            'lng.required' => 'Para publicar en el mapa necesita coordenadas (pega el enlace de Google Maps).',
         ]);
 
         $data = [
@@ -138,8 +169,8 @@ final class Tatuadores extends Component
             'phone' => $this->phone !== '' ? $this->phone : null,
             'email' => $this->email !== '' ? $this->email : null,
             'maps_url' => $this->mapsUrl !== '' ? $this->mapsUrl : null,
-            'lat' => (float) $this->lat,
-            'lng' => (float) $this->lng,
+            'lat' => $this->lat !== '' ? (float) $this->lat : null,
+            'lng' => $this->lng !== '' ? (float) $this->lng : null,
             'is_active' => $this->isActive,
             'sort_order' => $this->sortOrder,
         ];
@@ -148,12 +179,20 @@ final class Tatuadores extends Component
             Tatuador::findOrFail($this->editingId)->update($data);
             $message = 'Tatuador actualizado.';
         } else {
-            Tatuador::create($data);
-            $message = 'Tatuador certificado y añadido al mapa.';
+            $solicitud = $this->fromSolicitudId !== null
+                ? TatuadorSolicitud::find($this->fromSolicitudId)
+                : null;
 
-            if ($this->fromSolicitudId !== null) {
-                TatuadorSolicitud::whereKey($this->fromSolicitudId)
-                    ->update(['status' => TatuadorSolicitud::STATUS_APPROVED]);
+            Tatuador::create($data + ['user_id' => $solicitud?->user_id]);
+            $message = $this->isActive
+                ? 'Tatuador certificado y añadido al mapa.'
+                : 'Tatuador guardado (pendiente de coordenadas para el mapa).';
+
+            if ($solicitud !== null && $solicitud->status === TatuadorSolicitud::STATUS_PENDING) {
+                $solicitud->forceFill([
+                    'status' => TatuadorSolicitud::STATUS_APPROVED,
+                    'approved_at' => now(),
+                ])->save();
             }
         }
 
@@ -165,6 +204,13 @@ final class Tatuadores extends Component
     public function toggleActive(int $id): void
     {
         $t = Tatuador::findOrFail($id);
+
+        if (! $t->is_active && ! $t->hasCoordinates()) {
+            $this->dispatch('toast', message: 'No se puede publicar sin coordenadas. Edita la ficha y pega el enlace de Google Maps.', type: 'error');
+
+            return;
+        }
+
         $t->update(['is_active' => ! $t->is_active]);
         $this->dispatch('toast', message: 'Estado del tatuador actualizado.', type: 'success');
     }
@@ -175,6 +221,23 @@ final class Tatuadores extends Component
         $this->dispatch('toast', message: 'Tatuador eliminado.', type: 'warning');
     }
 
+    /** Genera el código de recomendación del usuario vinculado al tatuador. */
+    public function generateLink(int $id, ReferralService $referrals): void
+    {
+        $tatuador = Tatuador::findOrFail($id);
+
+        if ($tatuador->user === null) {
+            $this->dispatch('toast', message: 'Este tatuador no tiene cuenta vinculada. Aprueba su solicitud o vincúlalo desde la edición.', type: 'error');
+
+            return;
+        }
+
+        $referrals->ensureCode($tatuador->user);
+
+        unset($this->tatuadores);
+        $this->dispatch('toast', message: 'Link de recomendación generado.', type: 'success');
+    }
+
     public function rejectSolicitud(int $id): void
     {
         TatuadorSolicitud::whereKey($id)->update(['status' => TatuadorSolicitud::STATUS_REJECTED]);
@@ -182,9 +245,9 @@ final class Tatuadores extends Component
     }
 
     /**
-     * Aprueba la solicitud: crea (o promueve) el User con role=artist, envía
-     * email con link de reset password y marca la solicitud aprobada. No añade
-     * automáticamente la entrada al mapa — eso lo hace `certifySolicitud`.
+     * Aprueba la solicitud en un solo flujo: crea (o promueve) el User con
+     * role=artist, crea la ficha del mapa (inactiva hasta tener coordenadas),
+     * envía email con link de reset password y marca la solicitud aprobada.
      */
     public function approveSolicitud(int $id): void
     {
@@ -216,6 +279,20 @@ final class Tatuadores extends Component
             'user_id' => $user->id,
         ])->save();
 
+        // Ficha del mapa en el mismo flujo: nace inactiva (sin coordenadas aún);
+        // el admin la publica al editarla y pegar el enlace de Google Maps.
+        Tatuador::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'studio_name' => (string) $solicitud->studio_name,
+                'artist_name' => (string) $solicitud->name,
+                'city' => $solicitud->city ?? 'Sin ciudad',
+                'phone' => $solicitud->phone,
+                'email' => $email,
+                'is_active' => false,
+            ],
+        );
+
         $token = Password::broker()->createToken($user);
         Mail::to($user->email)->send(new TatuadorApprovedMail($user, $token));
 
@@ -226,7 +303,7 @@ final class Tatuadores extends Component
             ->withProperties(['solicitud_id' => $solicitud->id])
             ->log('Tatuador aprobado');
 
-        $this->dispatch('toast', message: 'Solicitud aprobada y email enviado.', type: 'success');
+        $this->dispatch('toast', message: 'Aprobado: cuenta creada, email enviado y ficha del mapa lista para publicar.', type: 'success');
     }
 
     public function render(): View

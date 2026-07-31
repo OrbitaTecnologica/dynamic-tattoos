@@ -7,6 +7,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class Tatuador extends Model
 {
@@ -15,6 +16,7 @@ final class Tatuador extends Model
     protected $table = 'tatuadores';
 
     protected $fillable = [
+        'user_id',
         'studio_name',
         'artist_name',
         'city',
@@ -36,6 +38,17 @@ final class Tatuador extends Model
             'is_active' => 'boolean',
             'sort_order' => 'integer',
         ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /** El pin puede publicarse en el mapa (tiene coordenadas). */
+    public function hasCoordinates(): bool
+    {
+        return $this->lat !== null && $this->lng !== null;
     }
 
     /** @param Builder<self> $query */

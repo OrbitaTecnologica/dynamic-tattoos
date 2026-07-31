@@ -40,6 +40,10 @@ final class AuthTokenController extends Controller
                 'password' => (string) $request->input('password'),
             ]);
 
+            // El reintento también puede traer código de referido: sin esto, la
+            // atribución se perdía en el caso más común (no le llegó el OTP).
+            $referrals->attach($existing, $request->input('referral_code'));
+
             $verification->issue($existing);
 
             return response()->json([
@@ -68,6 +72,10 @@ final class AuthTokenController extends Controller
         ]);
 
         $referrals->attach($user, $request->input('referral_code'));
+
+        // Todo usuario nace con su código de recomendador (antes solo se generaba
+        // si abría la pestaña "Recomienda"; por eso casi nadie lo tenía).
+        $referrals->ensureCode($user);
 
         // Setup específico de embajador: tier por defecto, slug público compartible
         // y plan gratis Embajador si no llegó otro.

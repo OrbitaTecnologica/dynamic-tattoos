@@ -138,8 +138,10 @@
                                         Historial
                                     </button>
                                     <button wire:click="delete({{ $tattoo->id }})"
-                                            wire:confirm="¿Eliminar el tatuaje {{ $tattoo->short_code }}? Se borrarán sus versiones y escaneos."
-                                            class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-red-500/40 hover:text-red-400">
+                                            wire:confirm="¿Eliminar el tatuaje {{ $tattoo->short_code }}? Se borrarán sus versiones, escaneos y archivos."
+                                            wire:loading.attr="disabled"
+                                            wire:target="delete({{ $tattoo->id }})"
+                                            class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-red-500/40 hover:text-red-400 disabled:opacity-50">
                                         Eliminar
                                     </button>
                                 </div>

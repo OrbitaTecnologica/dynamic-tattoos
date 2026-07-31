@@ -85,9 +85,18 @@ final class Companies extends Component
 
     public function saveCompany(): void
     {
+        // Normaliza el website antes de validar: los usuarios guardan "dominio.com"
+        // sin protocolo desde el SPA y la regla `url` rechazaba el modal entero.
+        $website = trim($this->website);
+        if ($website !== '' && ! preg_match('#^https?://#i', $website)) {
+            $website = "https://{$website}";
+        }
+        $this->website = $website;
+
+        // Límites alineados con UpdateCompanyRequest (el API que crea estos datos).
         $this->validate([
-            'name' => ['nullable', 'string', 'max:150'],
-            'category' => ['nullable', 'string', 'max:100'],
+            'name' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:255'],
             'email' => ['nullable', 'email', 'max:255'],
             'website' => ['nullable', 'url', 'max:255'],
             'address' => ['nullable', 'string', 'max:255'],
@@ -109,6 +118,17 @@ final class Companies extends Component
 
         $this->showModal = false;
         $this->dispatch('toast', message: 'Empresa actualizada.', type: 'success');
+    }
+
+    /**
+     * Borra el perfil fiscal. No toca la cuenta del usuario: si vuelve a
+     * guardar sus datos desde el SPA, el perfil se recrea (firstOrCreate).
+     */
+    public function deleteCompany(int $id): void
+    {
+        Company::findOrFail($id)->delete();
+
+        $this->dispatch('toast', message: 'Perfil fiscal eliminado.', type: 'warning');
     }
 
     public function updatedSearch(): void

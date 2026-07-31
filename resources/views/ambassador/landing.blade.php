@@ -33,11 +33,11 @@
 
         <p>Tatuajes inteligentes con QR personalizable. Cambia el contenido al que apunta tu tatuaje cuando quieras, sin perder el diseño.</p>
 
-        <a href="{{ $frontendUrl }}/register/cliente?ref={{ $referralCode }}" class="cta-primary">
+        <a href="{{ $frontendUrl }}/register?ref={{ $referralCode }}" class="cta-primary">
             Crear mi cuenta gratis
         </a>
 
-        <a href="{{ $frontendUrl }}/register/embajador?ref={{ $referralCode }}" class="cta-secondary">
+        <a href="{{ $frontendUrl }}/register?plan=embajador&ref={{ $referralCode }}" class="cta-secondary">
             Únete como Embajador
         </a>
 

@@ -60,5 +60,11 @@ final class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api-write', static function (Request $request): Limit {
             return Limit::perMinute(30)->by($request->user()?->id ?: $request->ip());
         });
+
+        // Login web del panel: además del limitador por email+IP del
+        // LoginRequest, corta por IP los barridos de fuerza bruta.
+        RateLimiter::for('login', static function (Request $request): Limit {
+            return Limit::perMinute(10)->by($request->ip());
+        });
     }
 }

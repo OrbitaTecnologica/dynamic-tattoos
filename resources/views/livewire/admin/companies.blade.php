@@ -86,10 +86,19 @@
                             </td>
                             {{-- Acciones --}}
                             <td class="px-5 py-4 text-right">
-                                <button wire:click="openEdit({{ $company->id }})"
-                                        class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
-                                    Editar
-                                </button>
+                                <div class="flex items-center justify-end gap-2">
+                                    <button wire:click="openEdit({{ $company->id }})"
+                                            class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                        Editar
+                                    </button>
+                                    <button wire:click="deleteCompany({{ $company->id }})"
+                                            wire:confirm="¿Eliminar el perfil fiscal de {{ $company->user?->name ?? 'este usuario' }}? La cuenta del usuario no se toca."
+                                            wire:loading.attr="disabled"
+                                            wire:target="deleteCompany({{ $company->id }})"
+                                            class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-red-500/40 hover:text-red-400 disabled:opacity-50">
+                                        Eliminar
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     @empty

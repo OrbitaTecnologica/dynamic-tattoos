@@ -121,6 +121,11 @@ final class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Company::class);
     }
 
+    public function tatuador(): HasOne
+    {
+        return $this->hasOne(Tatuador::class);
+    }
+
     public function uploads(): HasMany
     {
         return $this->hasMany(Upload::class);

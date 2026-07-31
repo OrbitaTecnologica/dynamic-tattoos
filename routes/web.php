@@ -64,7 +64,7 @@ Route::get('/u/{slug}/c/{link}', [LinkPageController::class, 'redirect'])
 | Panel administrativo (sesión + rol admin)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', 'admin', 'admin.2fa'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::view('/', 'admin.dashboard')->name('dashboard');
 
     // Contenido

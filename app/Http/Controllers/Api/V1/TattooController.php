@@ -10,9 +10,11 @@ use App\Http\Requests\Api\V1\UpdateTattooRequest;
 use App\Http\Resources\Api\V1\TattooResource;
 use App\Models\Tattoo;
 use App\Models\User;
+use App\Services\UploadManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Storage;
 
 final class TattooController extends Controller
 {
@@ -71,9 +73,13 @@ final class TattooController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, Tattoo $tattoo): JsonResponse
+    public function destroy(Request $request, Tattoo $tattoo, UploadManager $uploads): JsonResponse
     {
         $this->authorize('delete', $tattoo);
+
+        // El cascade de la FK solo limpia filas; archivos y ledger de cuota van aparte.
+        $uploads->purgeByType("tattoo:{$tattoo->id}");
+        Storage::disk('public')->deleteDirectory("tattoos/{$tattoo->id}");
 
         $tattoo->delete();
 

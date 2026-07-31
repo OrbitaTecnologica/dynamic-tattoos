@@ -6,9 +6,12 @@ namespace App\Livewire\Admin;
 
 use App\Models\Tattoo;
 use App\Models\TattooContent;
+use App\Services\UploadManager;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
@@ -119,10 +122,13 @@ final class TattooList extends Component
     {
         $content = TattooContent::findOrFail($contentId);
 
-        TattooContent::query()
-            ->where('tattoo_id', $content->tattoo_id)
-            ->update(['is_active' => false]);
-        $content->update(['is_active' => true]);
+        // En transacción: entre ambos updates el tatuaje quedaría sin versión activa.
+        DB::transaction(function () use ($content): void {
+            TattooContent::query()
+                ->where('tattoo_id', $content->tattoo_id)
+                ->update(['is_active' => false]);
+            $content->update(['is_active' => true]);
+        });
 
         $tattoo = Tattoo::find($content->tattoo_id);
         if ($tattoo !== null) {
@@ -136,10 +142,21 @@ final class TattooList extends Component
     {
         $tattoo = Tattoo::findOrFail($tattooId);
         Cache::forget("tattoo_content_{$tattoo->short_code}");
+
+        // El cascade de la FK solo limpia filas; los archivos y el ledger de
+        // cuota (`uploads`, sin FK a tattoos) hay que purgarlos aparte.
+        app(UploadManager::class)->purgeByType("tattoo:{$tattoo->id}");
+        Storage::disk('public')->deleteDirectory("tattoos/{$tattoo->id}");
+
         $tattoo->delete();
 
         if ($this->historyTattooId === $tattooId) {
             $this->closeHistory();
+        }
+
+        if (($this->paginators['page'] ?? 1) > 1 && $this->tattoos->isEmpty()) {
+            $this->resetPage();
+            unset($this->tattoos);
         }
 
         $this->dispatch('toast', message: 'Tatuaje eliminado.', type: 'warning');

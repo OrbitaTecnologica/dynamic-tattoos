@@ -6,6 +6,8 @@ namespace App\Livewire\Admin;
 
 use App\Models\Referral;
 use App\Models\ReferralVisit;
+use App\Models\User;
+use App\Services\Referrals\ReferralService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 use Livewire\Attributes\Computed;
@@ -22,6 +24,9 @@ final class Referrals extends Component
 
     #[Url]
     public string $filterStatus = '';
+
+    #[Url]
+    public string $tab = 'conversiones';
 
     // -------------------------------------------------------------------------
     // Computed — KPIs
@@ -85,9 +90,51 @@ final class Referrals extends Component
             ->paginate(20);
     }
 
+    /** Todos los usuarios con su código, visitas y conversiones (pestaña Recomendadores). */
+    #[Computed]
+    public function recommenders(): LengthAwarePaginator
+    {
+        return User::query()
+            ->when($this->search !== '', fn ($q) => $q->where(function ($q): void {
+                $q->where('name', 'like', "%{$this->search}%")
+                    ->orWhere('email', 'like', "%{$this->search}%")
+                    ->orWhere('referral_code', 'like', "%{$this->search}%");
+            }))
+            ->withCount([
+                'referralVisits',
+                'referralsMade',
+                'referralsMade as paid_referrals_count' => fn ($q) => $q->where('status', Referral::STATUS_PAID),
+            ])
+            ->withSum(['referralsMade as paid_reward_cents' => fn ($q) => $q->where('status', Referral::STATUS_PAID)], 'reward_cents')
+            ->orderByDesc('referral_visits_count')
+            ->orderBy('id')
+            ->paginate(20, pageName: 'recPage');
+    }
+
+    /** Base pública para construir el link de recomendación. */
+    public function shareBase(): string
+    {
+        return rtrim((string) (config('app.frontend_url') ?: 'https://www.dynamic-tattoos.com'), '/');
+    }
+
     // -------------------------------------------------------------------------
     // Actions
     // -------------------------------------------------------------------------
+
+    public function showTab(string $tab): void
+    {
+        $this->tab = in_array($tab, ['conversiones', 'recomendadores'], true) ? $tab : 'conversiones';
+        $this->resetPage();
+        $this->resetPage('recPage');
+    }
+
+    public function generateCode(int $userId, ReferralService $referrals): void
+    {
+        $referrals->ensureCode(User::findOrFail($userId));
+
+        unset($this->recommenders);
+        $this->dispatch('toast', message: 'Código de recomendación generado.', type: 'success');
+    }
 
     public function markPaid(int $id): void
     {
@@ -121,6 +168,7 @@ final class Referrals extends Component
     public function updatedSearch(): void
     {
         $this->resetPage();
+        $this->resetPage('recPage');
     }
 
     public function updatedFilterStatus(): void

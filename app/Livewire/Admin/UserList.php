@@ -196,11 +196,21 @@ final class UserList extends Component
     public function resetTwoFactor(int $userId): void
     {
         // Las columnas 2FA no son mass-assignable (se gestionan con forceFill).
-        User::findOrFail($userId)->forceFill([
+        $user = User::findOrFail($userId);
+        $user->forceFill([
             'two_factor_secret' => null,
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ])->save();
+
+        // Acción sensible (con 2FA obligatorio, deja al usuario fuera del panel
+        // hasta re-enrolarse): siempre con rastro de quién la ejecutó.
+        activity('security')
+            ->causedBy(auth()->user())
+            ->performedOn($user)
+            ->event('2fa_reset')
+            ->withProperties(['detail' => "2FA restablecido para {$user->email}"])
+            ->log('Seguridad actualizada');
 
         $this->dispatch('toast', message: '2FA restablecido para el usuario.', type: 'success');
     }

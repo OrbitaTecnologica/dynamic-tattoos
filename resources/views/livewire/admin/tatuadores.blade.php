@@ -63,17 +63,40 @@
                         <th class="px-5 py-3">Artista</th>
                         <th class="px-5 py-3">Ciudad</th>
                         <th class="px-5 py-3">Coordenadas</th>
+                        <th class="px-5 py-3">Link recomendación</th>
                         <th class="px-5 py-3">Estado</th>
                         <th class="px-5 py-3 text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($this->tatuadores as $t)
-                        <tr class="border-b border-white/[0.04] transition hover:bg-white/[0.02]">
+                        <tr wire:key="tat-{{ $t->id }}" class="border-b border-white/[0.04] transition hover:bg-white/[0.02]">
                             <td class="px-5 py-3 font-medium text-white">{{ $t->studio_name }}</td>
                             <td class="px-5 py-3 text-gray-300">{{ $t->artist_name ?? '—' }}</td>
                             <td class="px-5 py-3 text-gray-300">{{ $t->city }}</td>
-                            <td class="px-5 py-3 font-mono text-xs text-gray-500">{{ $t->lat }}, {{ $t->lng }}</td>
+                            <td class="px-5 py-3 font-mono text-xs text-gray-500">
+                                @if($t->hasCoordinates())
+                                    {{ $t->lat }}, {{ $t->lng }}
+                                @else
+                                    <span class="text-amber-400/80">pendientes</span>
+                                @endif
+                            </td>
+                            <td class="px-5 py-3">
+                                @if($t->user?->referral_code)
+                                    <button type="button"
+                                            onclick="navigator.clipboard.writeText('{{ $this->shareBase() }}/register?ref={{ $t->user->referral_code }}'); this.textContent='¡Copiado!'; setTimeout(() => this.textContent='Copiar link', 1500)"
+                                            class="rounded-lg bg-white/5 px-2.5 py-1 text-xs font-medium text-cyan-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40">
+                                        Copiar link
+                                    </button>
+                                @elseif($t->user)
+                                    <button wire:click="generateLink({{ $t->id }})"
+                                            class="rounded-lg bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                        Generar link
+                                    </button>
+                                @else
+                                    <span class="text-xs text-gray-600">sin cuenta</span>
+                                @endif
+                            </td>
                             <td class="px-5 py-3">
                                 <span @class([
                                     'rounded-full px-2 py-0.5 text-xs font-semibold ring-1',
@@ -97,7 +120,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-600">
+                            <td colspan="7" class="px-5 py-12 text-center text-sm text-gray-600">
                                 Aún no hay tatuadores certificados. Crea el primero o certifica una solicitud.
                             </td>
                         </tr>

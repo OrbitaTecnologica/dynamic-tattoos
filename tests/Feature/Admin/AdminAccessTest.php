@@ -26,13 +26,27 @@ final class AdminAccessTest extends TestCase
 
     public function test_admin_can_open_every_admin_page(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
+        // Con 2FA obligatorio, un admin sin enrolar es redirigido al setup.
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'two_factor_secret' => 'TESTSECRET',
+            'two_factor_confirmed_at' => now(),
+        ]);
 
         foreach ($this->adminRoutes() as $name) {
             $this->actingAs($admin)
                 ->get(route($name))
                 ->assertOk();
         }
+    }
+
+    public function test_admin_without_two_factor_is_redirected_to_setup(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertRedirect(route('two-factor.setup'));
     }
 
     public function test_non_admin_is_forbidden_from_every_admin_page(): void

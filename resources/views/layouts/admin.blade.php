@@ -106,7 +106,7 @@
                         ],
                         'Clientes' => [
                             ['route' => 'admin.users',         'label' => 'Usuarios',       'icon' => 'users'],
-                            ['route' => 'admin.companies',     'label' => 'Empresas',       'icon' => 'company'],
+                            ['route' => 'admin.companies',     'label' => 'Datos fiscales', 'icon' => 'pricing'],
                             ['route' => 'admin.team-members',  'label' => 'Equipos',        'icon' => 'team'],
                             ['route' => 'admin.storage-usage', 'label' => 'Almacenamiento', 'icon' => 'folder'],
                         ],

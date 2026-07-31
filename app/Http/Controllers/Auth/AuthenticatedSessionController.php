@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\AdminLoginNotifier;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,11 +23,29 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, AdminLoginNotifier $notifier): RedirectResponse
     {
         $request->authenticate();
 
+        $user = $request->user();
+
+        // Con 2FA activo la sesión no se abre aún: se cierra y se exige el
+        // código en el challenge (que es quien hace el login definitivo).
+        if ($user !== null && $user->hasTwoFactorEnabled()) {
+            Auth::guard('web')->logout();
+            $request->session()->put([
+                'login.id' => $user->id,
+                'login.remember' => $request->boolean('remember'),
+            ]);
+
+            return redirect()->route('two-factor.challenge');
+        }
+
         $request->session()->regenerate();
+
+        if ($user !== null) {
+            $notifier->record($user, $request);
+        }
 
         return redirect()->intended(route('admin.dashboard'));
     }

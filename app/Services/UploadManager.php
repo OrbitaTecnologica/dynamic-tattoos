@@ -42,4 +42,20 @@ final class UploadManager
                 $upload->delete();
             });
     }
+
+    /**
+     * Remove every stored file + ledger row of the given type across all users.
+     * Needed when the owning entity is deleted outright: `uploads` has no FK to
+     * it and the owner may be soft-deleted, so the user-scoped purge no basta.
+     */
+    public function purgeByType(string $type): void
+    {
+        Upload::query()
+            ->where('type', $type)
+            ->get()
+            ->each(function (Upload $upload): void {
+                Storage::disk($upload->disk)->delete($upload->path);
+                $upload->delete();
+            });
+    }
 }

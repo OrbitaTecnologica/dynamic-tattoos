@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\TatuadorApprovedMail;
+use App\Models\Tatuador;
 use App\Models\TatuadorSolicitud;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -44,6 +45,19 @@ final class TatuadorApprovalController extends Controller
             'approved_at' => now(),
             'user_id' => $user->id,
         ])->save();
+
+        // Ficha del mapa en el mismo flujo (inactiva hasta tener coordenadas).
+        Tatuador::firstOrCreate(
+            ['user_id' => $user->id],
+            [
+                'studio_name' => (string) $solicitud->studio_name,
+                'artist_name' => (string) $solicitud->name,
+                'city' => $solicitud->city ?? 'Sin ciudad',
+                'phone' => $solicitud->phone,
+                'email' => $email,
+                'is_active' => false,
+            ],
+        );
 
         // Token de reset password para que el tatuador defina su contraseña al primer acceso.
         $token = Password::broker()->createToken($user);

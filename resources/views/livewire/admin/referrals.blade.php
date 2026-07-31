@@ -44,6 +44,26 @@
         </div>
     </div>
 
+    {{-- ── Tabs ─────────────────────────────────────────────────────────────── --}}
+    <div class="flex items-center gap-2">
+        <button wire:click="showTab('conversiones')"
+                @class([
+                    'rounded-xl px-4 py-2 text-xs font-semibold transition ring-1',
+                    'bg-gradient-to-r from-cyan-500 to-violet-500 text-white ring-transparent shadow-lg shadow-cyan-500/20' => $tab === 'conversiones',
+                    'bg-white/5 text-gray-400 ring-white/10 hover:text-white' => $tab !== 'conversiones',
+                ])>
+            Conversiones
+        </button>
+        <button wire:click="showTab('recomendadores')"
+                @class([
+                    'rounded-xl px-4 py-2 text-xs font-semibold transition ring-1',
+                    'bg-gradient-to-r from-cyan-500 to-violet-500 text-white ring-transparent shadow-lg shadow-cyan-500/20' => $tab === 'recomendadores',
+                    'bg-white/5 text-gray-400 ring-white/10 hover:text-white' => $tab !== 'recomendadores',
+                ])>
+            Recomendadores
+        </button>
+    </div>
+
     {{-- ── Toolbar ──────────────────────────────────────────────────────────── --}}
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div class="relative flex-1">
@@ -52,17 +72,81 @@
             </svg>
             <input wire:model.live.debounce.400ms="search"
                    type="search"
-                   placeholder="Buscar por nombre o email del Partner o referido…"
+                   placeholder="{{ $tab === 'recomendadores' ? 'Buscar por nombre, email o código…' : 'Buscar por nombre o email del Partner o referido…' }}"
                    class="w-full rounded-xl bg-white/5 border border-white/[0.08] pl-9 pr-4 py-2.5 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500/40 focus:ring-1 focus:ring-cyan-500/20 transition">
         </div>
-        <select wire:model.live="filterStatus"
-                class="rounded-xl bg-white/5 border border-white/[0.08] px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/40 transition">
-            <option value="">Todos los estados</option>
-            <option value="registered">Registrado</option>
-            <option value="paid">Pagado</option>
-        </select>
+        @if($tab === 'conversiones')
+            <select wire:model.live="filterStatus"
+                    class="rounded-xl bg-white/5 border border-white/[0.08] px-4 py-2.5 text-sm text-gray-300 focus:outline-none focus:border-cyan-500/40 transition">
+                <option value="">Todos los estados</option>
+                <option value="registered">Registrado</option>
+                <option value="paid">Pagado</option>
+            </select>
+        @endif
     </div>
 
+    @if($tab === 'recomendadores')
+    {{-- ── Recomendadores: todos los usuarios con su link ───────────────────── --}}
+    <div class="glass rounded-2xl overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="border-b border-white/[0.06] text-left text-xs font-semibold uppercase tracking-widest text-gray-500">
+                        <th class="px-5 py-3.5">Usuario</th>
+                        <th class="px-5 py-3.5">Link de recomendación</th>
+                        <th class="px-5 py-3.5 text-center">Visitas</th>
+                        <th class="px-5 py-3.5 text-center">Registrados</th>
+                        <th class="px-5 py-3.5 text-center">Pagados</th>
+                        <th class="px-5 py-3.5 text-right">Comisión</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/[0.04]">
+                    @forelse($this->recommenders as $rec)
+                        <tr wire:key="rec-{{ $rec->id }}" class="hover:bg-white/[0.02] transition">
+                            <td class="px-5 py-4">
+                                <p class="font-medium text-white text-sm">{{ $rec->name }}</p>
+                                <p class="text-xs text-gray-500">{{ $rec->email }}</p>
+                            </td>
+                            <td class="px-5 py-4">
+                                @if($rec->referral_code)
+                                    @php $link = $this->shareBase().'/register?ref='.$rec->referral_code; @endphp
+                                    <div class="flex items-center gap-2">
+                                        <code class="rounded bg-white/5 px-2 py-1 text-xs text-cyan-300 ring-1 ring-white/10">{{ $rec->referral_code }}</code>
+                                        <button type="button"
+                                                onclick="navigator.clipboard.writeText('{{ $link }}'); this.textContent='¡Copiado!'; setTimeout(() => this.textContent='Copiar link', 1500)"
+                                                class="rounded-lg bg-white/5 px-2.5 py-1 text-xs font-medium text-gray-300 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                            Copiar link
+                                        </button>
+                                    </div>
+                                @else
+                                    <button wire:click="generateCode({{ $rec->id }})"
+                                            class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-gray-400 ring-1 ring-white/10 transition hover:ring-cyan-500/40 hover:text-cyan-300">
+                                        Generar código
+                                    </button>
+                                @endif
+                            </td>
+                            <td class="px-5 py-4 text-center tabular-nums text-gray-300">{{ $rec->referral_visits_count }}</td>
+                            <td class="px-5 py-4 text-center tabular-nums text-gray-300">{{ $rec->referrals_made_count }}</td>
+                            <td class="px-5 py-4 text-center tabular-nums text-emerald-300">{{ $rec->paid_referrals_count }}</td>
+                            <td class="px-5 py-4 text-right tabular-nums text-xs text-gray-300">
+                                {{ number_format((int) ($rec->paid_reward_cents ?? 0) / 100, 2) }} €
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-5 py-12 text-center text-sm text-gray-600">
+                                No se encontraron usuarios.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+        <div class="border-t border-white/[0.06] px-5 py-3">
+            {{ $this->recommenders->links() }}
+        </div>
+    </div>
+    @else
     {{-- ── Table ────────────────────────────────────────────────────────────── --}}
     <div class="glass rounded-2xl overflow-hidden">
         <div class="overflow-x-auto">
@@ -171,5 +255,6 @@
             {{ $this->referrals->links() }}
         </div>
     </div>
+    @endif
 
 </div>
